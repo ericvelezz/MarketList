@@ -68,6 +68,12 @@ button{transition:transform .1s}button:active{transform:scale(.97)}
 html{-webkit-text-size-adjust:100%}*{-webkit-tap-highlight-color:transparent}button,.chip,.day{touch-action:manipulation}body{overscroll-behavior-y:none;min-height:100dvh}.home{min-height:100dvh}
 #side img.logo{width:52%;height:auto;border:0;background:none;border-radius:0;display:block;margin:0 auto 28px}
 .lbtn{display:block;width:100%;text-align:left;margin:6px 0;padding:14px;border:2px solid transparent;background:#f2f5fa;font-weight:700}.lbtn.on{border-color:var(--acc);background:#fff;color:var(--acc)}
+.swr{position:relative;margin:10px 0;border-radius:20px;overflow:hidden;background:#e5484d}
+.swr .card{margin:0;position:relative;touch-action:pan-y;transition:transform .2s;user-select:none;-webkit-user-select:none}.swr.drag .card{transition:none}
+.swd{position:absolute;top:0;bottom:0;width:84px;background:#e5484d;color:#fff;font-size:26px;border-radius:0;padding:0}.swd.l{left:0}.swd.r{right:0}
+.badge{flex:0;background:var(--acc);color:#fff;border-radius:20px;padding:2px 12px;font-weight:800}
+.lsel{display:flex;align-items:center;width:100%;padding:14px;border:2px solid var(--acc);background:#fff;font-weight:700}
+.fl{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:20px;margin-right:10px;font-size:20px}.fl svg{width:28px;height:20px;border-radius:3px;box-shadow:0 0 0 1px #0002}
 </style></head><body>
 <div id="app"></div>
 <script src="config.js"></script>
@@ -115,7 +121,7 @@ async function share(kind,t){
  modal={share:location.href.split('#')[0]+'#s='+id,code:id};render();}
 const ask=(msg,ok)=>{modal={msg,ok};render();};
 const sName=(list,id)=>(list.find(s=>s.id==id)||{}).name||'';
-function storePick(list,sid){pk=sid||null;return `<label>Botiga</label><div id="chips">${list.map(s=>`<span class="chip ${s.id==sid?'on':''}" data-a="pick" data-id="${s.id}">${e(s.name)}</span>`).join('')}</div><input id="ns" placeholder="${list.length?'+ Nova botiga':'Nom de la nova botiga'}">`;}
+function storePick(list,sid,lb,ph){pk=sid||null;return `<label>${lb||'Botiga'}</label><div id="chips">${list.map(s=>`<span class="chip ${s.id==sid?'on':''}" data-a="pick" data-id="${s.id}">${e(s.name)}</span>`).join('')}</div><input id="ns" placeholder="${ph?(list.length?ph:'Nom del nou lloc'):(list.length?'+ Nova botiga':'Nom de la nova botiga')}">`;}
 function resolveStore(list){const n=($('#ns').value||'').trim();if(n){let s=list.find(x=>x.name.toLowerCase()==n.toLowerCase());if(!s){s={id:uid(),name:n};list.push(s);}return s.id;}return pk;}
 const fmtD=d=>d?new Date(d+'T00:00').toLocaleDateString(LOC(),{weekday:'short',day:'numeric',month:'short'}):'Sense data';
 const unitSel=u=>`<select id="u">${UN.map(x=>`<option ${x==u?'selected':''}>${x}</option>`).join('')}</select>`;
@@ -129,28 +135,28 @@ function shopMain(){
  return `<button class="pri" style="width:100%;font-size:18px" data-a="startbuy" ${S.items.length?'':'disabled'}>Començar compra</button>
  <h3>${allS?'Tots els supermercats':'Botigues amb productes pendents'}</h3>
  ${st.map(s=>`<div class="card"><h4>${e(s.name)}</h4>${S.items.filter(i=>i.store==s.id).map(i=>`<div class="it"><span>${itLine(i)}</span><button data-a="delItem" data-id="${i.id}">✕</button></div>`).join('')||'<div class="dim" style="padding:6px">Res pendent</div>'}</div>`).join('')||'<div class="dim">No hi ha productes pendents.<br>Afegeix-ne amb «Nou Producte».</div>'}
- <button class="link" data-a="toggleAll">${allS?'Només botigues amb pendents':'Veure tots els supermercats'}</button>`;}
+ `;}
 function buyView(){
  return S.stores.filter(s=>S.items.some(i=>i.store==s.id)).map(s=>`<div class="card"><h4>${e(s.name)}</h4>${S.items.filter(i=>i.store==s.id).map(i=>`<label class="it" style="opacity:1;font-size:16px"><input type="checkbox" data-a="chk" data-id="${i.id}" ${buying[i.id]?'checked':''}><span>${itLine(i)}</span></label>`).join('')}</div>`).join('')+`<button class="pri" style="width:100%;margin-top:10px" data-a="finish">Finalitzar compra</button>`;}
 function histView(){
  if(sel){const h=S.history.find(x=>x.id==sel);if(h){const g=a=>a.map(i=>`<div class="it"><span>${itLine(i)} · <small>${e(i.sn)}</small></span></div>`).join('')||'<div class="dim" style="padding:6px">Cap</div>';
   return `<button class="sec" data-a="histBack">‹ Enrere</button><div class="card"><h4>${new Date(h.ts).toLocaleString(LOC())}</h4><b>Botigues:</b> ${e([...new Set(h.bought.concat(h.pending).map(i=>i.sn))].join(', ')||'—')}</div><div class="card"><h4>Comprats</h4>${g(h.bought)}</div><div class="card"><h4>Pendents</h4>${g(h.pending)}</div>`;}}
  return S.history.map(h=>`<div class="card" data-a="histOpen" data-id="${h.id}"><b>${new Date(h.ts).toLocaleString(LOC())}</b><br><small>${h.bought.length} comprats · ${h.pending.length} pendents</small></div>`).join('')||'<div class="dim">Encara no hi ha compres finalitzades.</div>';}
-function taskForm(t){t=t||{};return `<div class="card"><label>Què s'ha de fer</label><input id="t_title" value="${e(t.title)}" placeholder="Ex.: Anar a la perruqueria">
+function taskForm(t,d){t=t||{};return `<div class="card"><label>Què s'ha de fer</label><input id="t_title" value="${e(t.title)}" placeholder="Ex.: Anar a la perruqueria">
 <label>Descripció</label><textarea id="t_desc" rows="3">${e(t.desc)}</textarea>
 <div class="row"><div><label>Dia</label>${dateField('t_date',t.date)}</div><div><label>Hora (opcional)</label><input id="t_time" type="time" value="${e(t.time)}"></div></div>
-<label>Carrer, lloc i detalls</label><input id="t_addr" value="${e(t.addr)}">${storePick(S.tstores,t.store)}</div>`;}
+<label>Carrer, lloc i detalls</label><input id="t_addr" value="${e(t.addr)}">${d?(pk=null,`<label>Lloc</label><input id="ns" value="${e(t.place!=null?t.place:sName(S.tstores,t.store))}" placeholder="Lloc">`):storePick(S.tstores,t.store,'Triar lloc','+ Nou lloc')}</div>`;}
 function readTask(){const title=$('#t_title').value.trim();if(!title){modal={msg:'Cal escriure què s\'ha de fer.',info:1};render();return null;}
  return {title,desc:$('#t_desc').value,date:$('#t_date').value,time:$('#t_time').value,addr:$('#t_addr').value,store:resolveStore(S.tstores)};}
 function taskMain(){const L=[...S.tasks].sort((a,b)=>(a.date||'9')+(a.time||'')>(b.date||'9')+(b.time||'')?1:-1);
  return L.map(t=>`<div class="card" data-a="openTask" data-id="${t.id}"><b>${e(t.title)}</b>${t.time?' · '+e(t.time):''}<br><small>${fmtD(t.date)}${t.store?' · '+e(sName(S.tstores,t.store)):''}</small></div>`).join('')||'<div class="dim">No tens encàrrecs.<br>Crea\'n un amb «Nova Tasca».</div>';}
-function detail(){const t=S.tasks.find(x=>x.id==sel);if(!t)return'';return `<button class="sec" data-a="menu">‹ Enrere</button>${taskForm(t)}<div class="hrow"><button class="pri" data-a="updTask">Guardar</button><button class="sec" data-a="shareTask">Compartir</button><button data-a="delTask" style="color:#b3261e;font-weight:600">Eliminar</button></div><button class="pri" style="width:100%;margin-top:10px;background:#2f9e44" data-a="doneTask" data-id="${t.id}">✅ Marcar com a feta</button>`;}
+function detail(){const t=S.tasks.find(x=>x.id==sel);if(!t)return'';return `<button class="sec" data-a="menu">‹ Enrere</button>${taskForm(t,1)}<div class="hrow"><button class="pri" data-a="updTask">Guardar</button><button class="sec" data-a="shareTask">Compartir</button><button data-a="delTask" style="color:#b3261e;font-weight:600">Eliminar</button></div><button class="pri" style="width:100%;margin-top:10px;background:#2f9e44" data-a="doneTask" data-id="${t.id}">✅ Marcar com a feta</button>`;}
 function sharedList(){const k=fn;
  return `<div class="card"><label>Afegir una llista amb un codi</label><div class="row"><input id="code" placeholder="Codi"><button class="pri" style="flex:0" data-a="joinCode">Afegir</button></div></div>`+
  (S.refs.filter(r=>r.kind==k).map(r=>`<div class="card row"><div data-a="openSh" data-id="${r.id}" style="flex:1"><b>${e(r.title)}</b></div><button style="flex:0;color:#b3261e" data-a="leave" data-id="${r.id}">✕</button></div>`).join('')||'<div class="dim">Encara no tens res compartit.</div>');}
 function shView(){
  if(!curDoc)return '<div class="dim">Carregant…</div>';const d=curDoc;
- if(d.kind=='task'){const t=d.task;return `<button class="sec" data-a="shBack">‹ Enrere</button>${taskForm({...t,store:null}).replace('id="ns"','id="ns" value="'+e(t.storeName||'')+'"')}<button class="pri" style="width:100%" data-a="saveShTask">Guardar canvis</button>`;}
+ if(d.kind=='task'){const t=d.task;return `<button class="sec" data-a="shBack">‹ Enrere</button>${taskForm({...t,place:t.storeName||''},1)}<button class="pri" style="width:100%" data-a="saveShTask">Guardar canvis</button>`;}
  return `<button class="sec" data-a="shBack">‹ Enrere</button><div class="card"><div class="row"><input id="n" placeholder="Producte"><input id="q" type="number" value="1" style="flex:.5">${unitSel()}</div>
  <input id="ns" list="dl" placeholder="Botiga"><datalist id="dl">${d.stores.map(s=>`<option value="${e(s.name)}">`).join('')}</datalist><button class="pri" style="width:100%;margin-top:8px" data-a="shAdd">Afegir</button></div>`+
  d.stores.filter(s=>d.items.some(i=>i.store==s.id)).map(s=>`<div class="card"><h4>${e(s.name)}</h4>${d.items.filter(i=>i.store==s.id).map(i=>`<div class="it"><input type="checkbox" data-a="shChk" data-id="${i.id}" ${i.done?'checked':''}><span style="${i.done?'text-decoration:line-through;opacity:.5':''}">${itLine(i)}</span><button data-a="shDel" data-id="${i.id}">✕</button></div>`).join('')}</div>`).join('')||'<div class="dim">Llista buida.</div>';}
@@ -162,7 +168,7 @@ function account(){const a=acc||{};return `<div class="card"><label>Nom</label><
 const TITLES={main:()=>fn=='shop'?'Supermercat':'Encàrrecs',new:()=>fn=='shop'?'Nou producte':'Nova tasca',hist:()=>fn=='shop'?'Historial de compres':'Historial de tasques',shared:()=>fn=='shop'?'Llistes compartides':'Tasques compartides',edit:()=>fn=='shop'?'Editar supermercats':'Editar botigues',account:()=>'Compte',buy:()=>'Compra en curs',detail:()=>'Encàrrec',sh:()=>'Llista compartida'};
 function body(){
  switch(view){case 'main':return fn=='shop'?shopMain():taskMain();case 'new':return fn=='shop'?newShop():taskForm().replace('<div class="card">','<div class="card"><div class="ttl">📝 Nova tasca</div>')+'<button class="pri" style="width:100%" data-a="saveTask">Guardar</button>';
- case 'cfg':return cfgView();case 'hist':return fn=='task'?taskHist():histView();case 'shared':return sharedList();case 'edit':return editStores();case 'account':return account();case 'buy':return buyView();case 'detail':return detail();case 'sh':return shView();}}
+ case 'cfg':return cfgView();case 'store':return storeView();case 'hist':return fn=='task'?taskHist():histView();case 'shared':return sharedList();case 'edit':return editStores();case 'account':return account();case 'buy':return buyView();case 'detail':return detail();case 'sh':return shView();}}
 function modalHtml(){const m=modal;if(!m)return'';let h='';
  if(m.share)h=`<h3>Llista compartida</h3><p>Envia aquest enllaç. La persona haurà d'obrir l'aplicació amb sessió iniciada i amb accés a la pàgina.</p><input readonly value="${e(m.share)}" onclick="this.select()"><div class="codebox">${m.code}</div><p class="note">Digues-li aquest codi: l'haurà d'escriure a l'apartat de compartits.</p><div class="hrow"><button class="pri" data-a="copy">Copiar</button><a href="https://wa.me/?text=${encodeURIComponent(m.share+' (codi: '+m.code+')')}" target="_blank" rel="noopener" style="flex:1"><button class="sec" style="width:100%">WhatsApp</button></a></div><div class="hrow"><button data-a="close" style="width:100%">Tancar</button></div>`;
  else if(m.cal)h=calHtml(m.cal);
@@ -226,7 +232,7 @@ document.addEventListener('change',ev=>{const t=ev.target;if(t.dataset.a=='ren')
 function readTaskSh(){const title=$('#t_title').value.trim();if(!title)return null;return {title,desc:$('#t_desc').value,date:$('#t_date').value,time:$('#t_time').value,addr:$('#t_addr').value,storeName:$('#ns').value.trim()};}
 function commit(keep){const nm=i=>({...i,sn:sName(S.stores,i.store)});
  const b=S.items.filter(i=>buying[i.id]).map(nm),u=S.items.filter(i=>!buying[i.id]).map(nm);
- S.history.unshift({id:uid(),ts:Date.now(),bought:b,pending:u});S.curCode=null;S.items=keep?S.items.filter(i=>!buying[i.id]):[];
+ S.history.unshift({id:uid(),ts:Date.now(),bought:b,pending:u});S.curCode=null;S.scodes={};S.items=keep?S.items.filter(i=>!buying[i.id]):[];
  buying=null;modal=null;save();go('main');}
 const IC={main:'🏠',new:'➕',hist:'🧾',shared:'🤝',edit:'✏️',account:'👤',buy:'✅',detail:'📝',sh:'🤝'};
 const brand=()=>`<div class="hb"><img class="logo" src="${LOGO}" alt="MarketList"><div class="brand"><span class="mk">Market</span>List</div></div>`;
@@ -234,12 +240,12 @@ function homeHtml(){return `<div class="home"><div class="hb"><img class="logo" 
 function authHtml(){const reg=db&&me;return `<div class="home"><div class="hb"><img class="logo sm2" src="${LOGO}" alt="MarketList"></div><div class="hm"><div class="card pad">`+(reg?`<div class="ttl">👋 Crea el teu compte</div><input id="r_n" placeholder="Nom"><input id="r_c" placeholder="Cognom"><input id="r_u" placeholder="Nom d'usuari"><input id="r_e" type="email" placeholder="Correu electrònic"><button class="pri" style="width:100%;margin-top:10px" data-a="reg">Registrar-me i entrar</button><div class="note">Entres amb la teva sessió de claude.ai, per això no hi ha contrasenya pròpia.</div>`:`<div class="ttl">🔐 Inicia sessió</div><p>Per desar les dades al núvol i compartir llistes, obre MarketList amb la sessió de claude.ai iniciada.</p>`)+`</div><div class="warn">Si continues sense registrar-te, els canvis no es conservaran en tancar o abandonar l'aplicació.</div><button class="sec" style="width:100%" data-a="guest">Continuar sense registrar-se</button></div></div>`;}
 function sideHtml(){const s=fn=='shop',b=(a,i,t)=>`<button data-a="${a}">${i} ${t}</button>`;return `<div id="side" class="${side?'open':''}"><img class="logo" src="${LOGO}" alt="MarketList"><button class="new" data-a="nav-new">${s?'➕ Nou Producte':'➕ Nova Tasca'}</button>${b('nav-main','🏠','Menú Principal')}${b('nav-hist','🧾',s?'Historial de compres':'Historial de tasques')}${b('nav-shared','🤝',s?'Llistes compartides':'Tasques compartides')}${b('nav-edit','✏️',s?'Editar supermercats':'Editar botigues')}${b('nav-account','👤','Compte')}${b('nav-cfg','⚙️','Configuració')}${b('swap','🔄','Canviar de funció')}</div>`;}
 function newShop(){return `<div class="card pad"><div class="ttl">🛍️ Nou producte</div><label>Producte</label><input id="n" placeholder="Ex.: Mandarines"><div class="row"><div><label>Quantitat</label><input id="q" type="number" min="0" step="any" value="1"></div><div><label>Unitat</label>${unitSel()}</div></div><label>📅 Data de compra (opcional)</label>${dateField('d','')}<div class="note">La data ha de ser la del dia de la compra.</div>${storePick(S.stores)}<button class="pri" style="width:100%;margin-top:14px" data-a="saveItem">Guardar</button></div>`;}
-function account(){const p=S.profile||{},a=acc||{},r=(l,v)=>`<div class="kv"><label>${l}</label><b>${e(v||'—')}</b></div>`;return `<div class="card pad"><div class="avatar">${e((p.nom||a.name||'?')[0])}</div>${r('Nom',p.nom||a.name)}${r('Cognom',p.cognom)}${r(`Nom d'usuari`,p.user)}${r('Correu electrònic',p.email)}</div>${me?'':'<div class="warn">Sessió no iniciada: les dades són temporals.</div>'}<button class="pri" style="width:100%" data-a="colors">🎨 Canviar el color de l'aplicació</button>${me?'<button class="sec" style="width:100%;margin-top:10px" data-a="logout">🚪 Tancar sessió</button>':''}`;}
+function account(){const p=S.profile||{},a=acc||{},r=(l,v)=>`<div class="kv"><label>${l}</label><b>${e(v||'—')}</b></div>`;return `<div class="card pad"><div class="avatar">${e((p.nom||a.name||'?')[0])}</div>${r('Nom',p.nom||a.name)}${r('Cognom',p.cognom)}${r(`Nom d'usuari`,p.user)}${r('Correu electrònic',p.email)}</div>${me?'':'<div class="warn">Sessió no iniciada: les dades són temporals.</div>'}${me?'<button class="sec" style="width:100%;margin-top:10px" data-a="logout">🚪 Tancar sessió</button>':''}`;}
 function render(keep){
  root.style.setProperty('--acc',S.color||'#1d5fd1');root.style.setProperty('--ac2',fn=='task'?'#ff922b':'#4aa3ff');
  root.style.setProperty('--bg',S.color?`color-mix(in srgb,${S.color} 14%,#fff)`:(fn=='task'?'#ffe6cc':'#dcefff'));
  let h;if(gate)h=authHtml();else if(!fn)h=homeHtml();
- else h=sideHtml()+`<button class="ic burger" data-a="side">${side?'✕':'☰'}</button><div id="scrim" class="scrim ${side?'open':''}" data-a="side"></div><header><h1>${view=='new'?'':IC[view]+' '+TITLES[view]()}</h1>${view=='buy'?'<button class="sec" data-a="share-shop">🔗 Compartir</button>':''}</header>`+body();
+ else h=sideHtml()+`<button class="ic burger" data-a="side">${side?'✕':'☰'}</button><div id="scrim" class="scrim ${side?'open':''}" data-a="side"></div><header><h1>${view=='new'?'':IC[view]+' '+TITLES[view]()}</h1>${view=='main'&&fn=='shop'?'<button class="sec" data-a="share-shop">🔗 Compartir</button>':view=='store'?'<button class="sec" data-a="share-store">🔗 Compartir</button>':''}</header>`+body();
  const sc=scrollY;$('#app').innerHTML=h+modalHtml();if(keep)scrollTo(0,sc);}
 document.addEventListener('click',ev=>{if(!ev.target.closest('[data-a="reg"]'))return;const ids=['#r_n','#r_c','#r_u','#r_e'],v=ids.map(i=>$(i).value.trim());
  if(v.some(x=>!x)||!/.+@.+/.test(v[3])){modal={msg:'Omple tots els camps amb un correu vàlid.',info:1};render();ids.forEach((k,i)=>$(k).value=v[i]);return;}
@@ -259,13 +265,13 @@ document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a]');if(
 const genCode=()=>Array.from({length:6},()=>'ABCDEFGHJKMNPQRSTUVWXYZ23456789'[Math.random()*31|0]).join('');
 async function share(kind,t){
  if(!db||!me){modal={msg:'Per compartir cal haver iniciat sessió.',info:1};return render();}
- const tk=S.tasks.find(x=>x.id==sel);let id=kind=='shop'?S.curCode:(tk||{}).code,ok=false;
+ const tk=S.tasks.find(x=>x.id==sel);let id=kind=='shop'?S.curCode:kind=='store'?(S.scodes||{})[t]:(tk||{}).code,ok=false;
  if(id){try{ok=(await db.doc('shared/'+id).get()).exists;}catch(x){}}
  for(let k=0;k<6&&!ok;k++){id=genCode();let ex=true;try{ex=(await db.doc('shared/'+id).get()).exists;}catch(x){}
   if(ex)continue;
-  const d=kind=='shop'?{kind,title:'Llista de compra',stores:S.stores.filter(s=>S.items.some(i=>i.store==s.id)),items:S.items}:{kind,title:t.title,task:t};
+  const st1=kind=='store'?S.stores.find(x=>x.id==t):null,d=kind=='store'?{kind:'shop',title:st1.name,stores:[st1],items:S.items.filter(i=>i.store==t)}:kind=='shop'?{kind,title:'Llista de compra',stores:S.stores.filter(s=>S.items.some(i=>i.store==s.id)),items:S.items}:{kind,title:t.title,task:t};
   try{await db.doc('shared/'+id).set(deep(d));ok=true;}catch(x){break;}
-  S.refs.push({id,kind,title:d.title});if(kind=='shop')S.curCode=id;else if(tk)tk.code=id;save();}
+  S.refs.push({id,kind:d.kind,title:d.title});if(kind=='shop')S.curCode=id;else if(kind=='store'){(S.scodes=S.scodes||{})[t]=id;}else if(tk)tk.code=id;save();}
  if(!ok){modal={msg:`No s'ha pogut compartir. Cal tenir permís de col·laborador.`,info:1};return render();}
  modal={share:location.href.split('#')[0]+'#s='+id,code:id};render();}
 function sharedList(){const s=fn=='shop';return `<div class="card pad"><div class="ttl">🔑 Tens un codi?</div><label>Escriu el codi que t'han passat per afegir ${s?'una llista de la compra':'una tasca'}</label><div class="row"><input id="code" placeholder="Ex.: K7M2QX" maxlength="8" style="text-transform:uppercase;letter-spacing:3px;font-weight:800"><button class="pri" style="flex:0;white-space:nowrap" data-a="joinCode">Afegir</button></div></div><h3>${s?'Les teves llistes compartides':'Les teves tasques compartides'}</h3>`+
@@ -443,4 +449,38 @@ Omple tots els camps; la contrasenya ha de tenir 6 caràcters o més.=Rellena to
 No s'ha pogut completar. Torna-ho a provar.=No se ha podido completar. Inténtalo de nuevo.|Could not complete. Please try again.|Impossible de terminer. Réessayez.|无法完成，请重试。|Ezin izan da burutu. Saiatu berriro.
 T'hem enviat un correu per confirmar el compte. Confirma'l i després inicia sessió.=Te hemos enviado un correo para confirmar la cuenta. Confírmalo e inicia sesión.|We sent you an email to confirm your account. Confirm it, then sign in.|Nous vous avons envoyé un e-mail de confirmation. Confirmez-le puis connectez-vous.|我们已发送确认邮件。请先确认，然后登录。|Kontua berresteko posta bidali dizugu. Berretsi eta gero hasi saioa.
 T'hem enviat un enllaç per restablir la contrasenya.=Te hemos enviado un enlace para restablecer la contraseña.|We sent you a link to reset your password.|Nous vous avons envoyé un lien pour réinitialiser le mot de passe.|我们已发送重置密码的链接。|Pasahitza berrezartzeko esteka bidali dizugu.`.split('\n').forEach(l=>{const i=l.indexOf('=');DICT[l.slice(0,i)]=l.slice(i+1).split('|');});
+let langOpen=false,SW=null,swiped=false;
+IC.store='🏪';TITLES.store=()=>sName(S.stores,sel);
+const FL={ca:`<svg viewBox="0 0 9 6"><rect width="9" height="6" fill="#fcdd09"/><g fill="#da121a"><rect y=".667" width="9" height=".667"/><rect y="2" width="9" height=".667"/><rect y="3.333" width="9" height=".667"/><rect y="4.667" width="9" height=".667"/></g></svg>`,es:'🇪🇸',en:'🇬🇧',fr:'🇫🇷',zh:'🇨🇳',eu:`<svg viewBox="0 0 14 8"><rect width="14" height="8" fill="#d52b1e"/><path d="M0 0L14 8M14 0L0 8" stroke="#009b48" stroke-width="1.4"/><path d="M7 0v8M0 4h14" stroke="#fff" stroke-width="1.4"/></svg>`};
+function cfgView(){const c=S.lang||'ca',cur=LN.find(x=>x[0]==c);
+ return `<div class="card pad"><div class="ttl">🌍 Idioma</div><button class="lsel" data-a="langtoggle"><span class="fl">${FL[c]}</span><span style="flex:1;text-align:left">${cur[1]}</span><span>${langOpen?'▲':'▼'}</span></button>${langOpen?LN.map(([k,n])=>`<button class="lbtn ${k==c?'on':''}" data-a="lang" data-l="${k}"><span class="fl">${FL[k]}</span>${n}${k=='ca'?' <small>(predeterminat)</small>':''}${k==c?' ✓':''}</button>`).join(''):''}</div><div class="card pad"><div class="ttl">🎨 Color</div><button class="pri" style="width:100%" data-a="colors">🎨 Canviar el color de l'aplicació</button></div>`;}
+function shopMain(){const st=S.stores.filter(s=>allS||S.items.some(i=>i.store==s.id));
+ return `<button class="pri" style="width:100%;font-size:18px" data-a="startbuy" ${S.items.length?'':'disabled'}>Començar compra</button><h3>${allS?'Tots els supermercats':'Botigues amb productes pendents'}</h3>`+
+ (st.map(s=>`<div class="card row" data-a="openStore" data-id="${s.id}"><div style="flex:1"><h4 style="margin:0">🏪 ${e(s.name)}</h4><small>${e(S.items.filter(i=>i.store==s.id).slice(0,3).map(i=>i.name).join(', '))}</small></div><span class="badge">${S.items.filter(i=>i.store==s.id).length}</span><span style="flex:0">›</span></div>`).join('')||'<div class="dim">No hi ha productes pendents.<br>Afegeix-ne amb «Nou Producte».</div>')+
+ ``;}
+function storeView(){const its=S.items.filter(i=>i.store==sel);return `<button class="sec" data-a="menu">‹ Enrere</button>`+(its.map(i=>`<div class="card"><div class="row"><div style="flex:1">${itLine(i)}</div><button style="flex:0;color:#b3261e" data-a="delItem" data-id="${i.id}">🗑️</button></div></div>`).join('')||'<div class="dim">Res pendent</div>');}
+function taskMain(){const L=[...S.tasks].sort((a,b)=>(a.date||'9')+(a.time||'')>(b.date||'9')+(b.time||'')?1:-1);
+ return L.map(t=>`<div class="swr"><button class="swd l" data-a="swdel" data-id="${t.id}">🗑️</button><button class="swd r" data-a="swdel" data-id="${t.id}">🗑️</button><div class="card swc" data-a="openTask" data-id="${t.id}"><div class="row"><div style="flex:1"><b>${e(t.title)}</b>${t.time?' · '+e(t.time):''}<br><small>${fmtD(t.date)}${t.store?' · '+e(sName(S.tstores,t.store)):''}</small></div><button class="pri" style="flex:0;white-space:nowrap" data-a="doneTask" data-id="${t.id}">✅ Fet</button></div></div></div>`).join('')||'<div class="dim">No tens encàrrecs.<br>Crea\'n un amb «Nova Tasca».</div>';}
+document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a]');if(!t)return;const a=t.dataset.a,id=t.dataset.id;
+ if(a=='langtoggle'){langOpen=!langOpen;render(true);}
+ else if(a=='lang'){langOpen=false;render();}
+ else if(a=='openStore'){sel=id;view='store';render();}
+ else if(a=='swdel'){const k=S.tasks.find(x=>x.id==id);if(k)ask(`Vols eliminar ${k.title}?`,()=>{S.tasks=S.tasks.filter(x=>x.id!=id);save();});}});
+const swClose=ex=>document.querySelectorAll('.swc').forEach(c=>{if(c!==ex&&c.dataset.o){c.dataset.o='';c.style.transform='';}});
+document.addEventListener('pointerdown',ev=>{const c=ev.target.closest('.swc');if(!ev.target.closest('.swd'))swClose(c);if(!c||ev.target.closest('button'))return;SW={c,id:ev.pointerId,x:ev.clientX,y:ev.clientY,dx:0,t:Date.now(),lock:0,base:+(c.dataset.o||0)};});
+document.addEventListener('pointermove',ev=>{if(!SW||ev.pointerId!=SW.id)return;const dx=ev.clientX-SW.x,dy=ev.clientY-SW.y;
+ if(!SW.lock){if(Math.abs(dx)>10&&Math.abs(dx)>Math.abs(dy)){SW.lock=1;SW.c.parentNode.classList.add('drag');try{SW.c.setPointerCapture(ev.pointerId)}catch(x){}}else if(Math.abs(dy)>10){SW=null;return;}}
+ if(SW.lock){SW.dx=dx;SW.c.style.transform=`translateX(${SW.base+dx}px)`;}});
+const swEnd=ev=>{if(!SW||ev.pointerId!=SW.id)return;const {c,dx,t,lock,base}=SW;SW=null;if(!lock)return;c.parentNode.classList.remove('drag');swiped=true;setTimeout(()=>swiped=false,60);
+ const f=base+dx,W=c.offsetWidth,v=Math.abs(dx)/(Date.now()-t+1);
+ if(Math.abs(f)>W*.5||(v>.9&&Math.abs(dx)>100)){c.style.transform=`translateX(${f>0?W:-W}px)`;const id=c.dataset.id;setTimeout(()=>{S.tasks=S.tasks.filter(x=>x.id!=id);save();render(true);},180);}
+ else if(Math.abs(f)>60){const o=f>0?84:-84;c.dataset.o=o;c.style.transform=`translateX(${o}px)`;}
+ else{c.dataset.o='';c.style.transform='';}};
+document.addEventListener('pointerup',swEnd);document.addEventListener('pointercancel',swEnd);
+document.addEventListener('click',ev=>{if(swiped){ev.stopPropagation();ev.preventDefault();return;}const c=ev.target.closest('.swc');if(c&&c.dataset.o&&!ev.target.closest('button')){ev.stopPropagation();swClose();}},true);
+`Triar lloc=Elegir lugar|Choose place|Choisir un lieu|选择地点|Aukeratu lekua
+Nou lloc=Nuevo lugar|New place|Nouveau lieu|新地点|Leku berria
+Nom del nou lloc=Nombre del nuevo lugar|Name of the new place|Nom du nouveau lieu|新地点名称|Leku berriaren izena
+Lloc=Lugar|Place|Lieu|地点|Lekua`.split('\n').forEach(l=>{const i=l.indexOf('=');DICT[l.slice(0,i)]=l.slice(i+1).split('|');});
+document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a="share-store"]');if(t)share('store',sel);});
 </script></body></html>
