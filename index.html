@@ -74,6 +74,7 @@ html{-webkit-text-size-adjust:100%}*{-webkit-tap-highlight-color:transparent}but
 .badge{flex:0;background:var(--acc);color:#fff;border-radius:20px;padding:2px 12px;font-weight:800}
 .lsel{display:flex;align-items:center;width:100%;padding:14px;border:2px solid var(--acc);background:#fff;font-weight:700}
 .fl{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:20px;margin-right:10px;font-size:20px}.fl svg{width:28px;height:20px;border-radius:3px;box-shadow:0 0 0 1px #0002}
+.inv{background:#fff8e1}
 </style></head><body>
 <div id="app"></div>
 <script src="config.js"></script>
@@ -87,7 +88,7 @@ let db=null,user=null,me=null,acc=null,S={stores:[],tstores:[],items:[],tasks:[]
 let fn=null,view='main',side=false,allS=false,buying=null,modal=null,cur=null,curDoc=null,unsub=null,sel=null,gate=true,pk=null,tm;
 const root=document.documentElement,deep=o=>JSON.parse(JSON.stringify(o));
 if(!window.CFG||CFG.url.includes('ENGANXA')){document.body.innerHTML='<p style="padding:24px;font-family:sans-serif">Falta configurar el fitxer config.js (mira LEEME.md).</p>';throw new Error('config');}
-let authMode='in',recov=false,bid=null;
+let authMode='in',recov=false,bid=null,inv=null;
 const SB=window.supabase.createClient(CFG.url,CFG.key);
 function shim(){return {doc:p=>{const sh=p.startsWith('shared/'),id=sh?p.split('/').pop():me,T=sh?'shared_docs':'app_data',K=sh?'id':'user_id';
  return {
@@ -100,7 +101,7 @@ async function boot(ss){const id=ss?ss.user.id:'none';if(bid===id)return;bid=id;
  if(ss){me=ss.user.id;db=shim();const m=ss.user.user_metadata||{};
   try{const s=await db.doc('data/users/'+me+'/app').get();if(s.exists)Object.assign(S,s.data());}catch(x){}
   S.profile={nom:m.nom,cognom:m.cognom,user:m.user,email:ss.user.email};gate=false;
-  const h=location.hash.match(/[#&]s=(\w+)/);if(h)await join(h[1]);}
+  const h=location.hash.match(/[#&]s=(\w+)/);if(h)inv=h[1];}
  else{me=null;db=null;}
  render();}
 SB.auth.onAuthStateChange((ev,ss)=>{if(ev=='PASSWORD_RECOVERY'){recov=true;gate=true;render();return;}
@@ -137,7 +138,7 @@ function shopMain(){
  ${st.map(s=>`<div class="card"><h4>${e(s.name)}</h4>${S.items.filter(i=>i.store==s.id).map(i=>`<div class="it"><span>${itLine(i)}</span><button data-a="delItem" data-id="${i.id}">✕</button></div>`).join('')||'<div class="dim" style="padding:6px">Res pendent</div>'}</div>`).join('')||'<div class="dim">No hi ha productes pendents.<br>Afegeix-ne amb «Nou Producte».</div>'}
  `;}
 function buyView(){
- return S.stores.filter(s=>S.items.some(i=>i.store==s.id)).map(s=>`<div class="card"><h4>${e(s.name)}</h4>${S.items.filter(i=>i.store==s.id).map(i=>`<label class="it" style="opacity:1;font-size:16px"><input type="checkbox" data-a="chk" data-id="${i.id}" ${buying[i.id]?'checked':''}><span>${itLine(i)}</span></label>`).join('')}</div>`).join('')+`<button class="pri" style="width:100%;margin-top:10px" data-a="finish">Finalitzar compra</button>`;}
+ return S.stores.filter(s=>(buyScope||[]).includes(s.id)&&S.items.some(i=>i.store==s.id)).map(s=>`<div class="card"><h4>${e(s.name)}</h4>${S.items.filter(i=>i.store==s.id).map(i=>`<label class="it" style="opacity:1;font-size:16px"><input type="checkbox" data-a="chk" data-id="${i.id}" ${buying[i.id]?'checked':''}><span>${itLine(i)}</span></label>`).join('')}</div>`).join('')+`<button class="pri" style="width:100%;margin-top:10px" data-a="finish">Finalitzar compra</button>`;}
 function histView(){
  if(sel){const h=S.history.find(x=>x.id==sel);if(h){const g=a=>a.map(i=>`<div class="it"><span>${itLine(i)} · <small>${e(i.sn)}</small></span></div>`).join('')||'<div class="dim" style="padding:6px">Cap</div>';
   return `<button class="sec" data-a="histBack">‹ Enrere</button><div class="card"><h4>${new Date(h.ts).toLocaleString(LOC())}</h4><b>Botigues:</b> ${e([...new Set(h.bought.concat(h.pending).map(i=>i.sn))].join(', ')||'—')}</div><div class="card"><h4>Comprats</h4>${g(h.bought)}</div><div class="card"><h4>Pendents</h4>${g(h.pending)}</div>`;}}
@@ -171,6 +172,7 @@ function body(){
  case 'cfg':return cfgView();case 'store':return storeView();case 'hist':return fn=='task'?taskHist():histView();case 'shared':return sharedList();case 'edit':return editStores();case 'account':return account();case 'buy':return buyView();case 'detail':return detail();case 'sh':return shView();}}
 function modalHtml(){const m=modal;if(!m)return'';let h='';
  if(m.share)h=`<h3>Llista compartida</h3><p>Envia aquest enllaç. La persona haurà d'obrir l'aplicació amb sessió iniciada i amb accés a la pàgina.</p><input readonly value="${e(m.share)}" onclick="this.select()"><div class="codebox">${m.code}</div><p class="note">Digues-li aquest codi: l'haurà d'escriure a l'apartat de compartits.</p><div class="hrow"><button class="pri" data-a="copy">Copiar</button><a href="https://wa.me/?text=${encodeURIComponent(m.share+' (codi: '+m.code+')')}" target="_blank" rel="noopener" style="flex:1"><button class="sec" style="width:100%">WhatsApp</button></a></div><div class="hrow"><button data-a="close" style="width:100%">Tancar</button></div>`;
+ else if(m.pickst)h=pickHtml(m);
  else if(m.cal)h=calHtml(m.cal);
  else if(m.colors)h=`<h3>Color</h3><div>${COL.map(c=>`<span class="sw" style="background:${c}" data-a="pickcol" data-c="${c}"></span>`).join('')}</div><div class="hrow"><button data-a="close" style="width:100%">Tornar enrere</button></div>`;
  else if(m.keep)h=`<p>${m.msg} Què vols fer amb els productes sense comprar?</p><div class="hrow"><button class="pri" data-a="keep1">Conservar-los</button><button data-a="keep0" style="color:#b3261e">Eliminar-los</button></div>`;
@@ -203,8 +205,8 @@ document.addEventListener('click',async ev=>{const t=ev.target.closest('[data-a]
   const st=resolveStore(S.stores);if(!st){modal={msg:'Selecciona o crea una botiga.',info:1};return render();}
   S.items.push({id:uid(),name:n,qty:$('#q').value||'1',unit:$('#u').value,store:st,date:$('#d').value});save();go('main');break;}
  case 'delItem':{const i=S.items.find(x=>x.id==id);ask(`Vols eliminar ${i.name}?`,()=>{S.items=S.items.filter(x=>x.id!=id);save();});break;}
- case 'startbuy':buying={};view='buy';render();break;
- case 'finish':{const un=S.items.filter(i=>!buying[i.id]);if(un.length){modal={msg:`Queden ${un.length} productes sense comprar.`,keep:1};render();}else commit(false);break;}
+ case 'startbuy':{const ids=S.stores.filter(x=>S.items.some(i=>i.store==x.id)).map(x=>x.id);modal={pickst:ids.slice(),all:ids};render();break;}
+ case 'finish':{const un=inScope().filter(i=>!buying[i.id]);if(un.length){modal={msg:`Queden ${un.length} productes sense comprar.`,keep:1};render();}else commit(false);break;}
  case 'keep1':commit(true);break;case 'keep0':commit(false);break;
  case 'histOpen':sel=id;render();break;case 'histBack':sel=null;render();break;
  case 'saveTask':{const t=readTask();if(!t)return;S.tasks.push({id:uid(),...t});save();go('main');break;}
@@ -231,12 +233,12 @@ document.addEventListener('click',async ev=>{const t=ev.target.closest('[data-a]
 document.addEventListener('change',ev=>{const t=ev.target;if(t.dataset.a=='ren'){const k=fn=='shop'?'stores':'tstores';const s=S[k].find(x=>x.id==t.dataset.id);if(s&&t.value.trim()){s.name=t.value.trim();save();}}});
 function readTaskSh(){const title=$('#t_title').value.trim();if(!title)return null;return {title,desc:$('#t_desc').value,date:$('#t_date').value,time:$('#t_time').value,addr:$('#t_addr').value,storeName:$('#ns').value.trim()};}
 function commit(keep){const nm=i=>({...i,sn:sName(S.stores,i.store)});
- const b=S.items.filter(i=>buying[i.id]).map(nm),u=S.items.filter(i=>!buying[i.id]).map(nm);
- S.history.unshift({id:uid(),ts:Date.now(),bought:b,pending:u});S.curCode=null;S.scodes={};S.items=keep?S.items.filter(i=>!buying[i.id]):[];
- buying=null;modal=null;save();go('main');}
+ const b=S.items.filter(i=>buying[i.id]).map(nm),u=inScope().filter(i=>!buying[i.id]).map(nm);
+ S.history.unshift({id:uid(),ts:Date.now(),bought:b,pending:u});S.curCode=null;S.scodes={};S.items=S.items.filter(i=>!buying[i.id]&&(keep||!(buyScope||[]).includes(i.store)));
+ buying=null;buyScope=null;modal=null;save();go('main');}
 const IC={main:'🏠',new:'➕',hist:'🧾',shared:'🤝',edit:'✏️',account:'👤',buy:'✅',detail:'📝',sh:'🤝'};
 const brand=()=>`<div class="hb"><img class="logo" src="${LOGO}" alt="MarketList"><div class="brand"><span class="mk">Market</span>List</div></div>`;
-function homeHtml(){return `<div class="home"><div class="hb"><img class="logo" src="${LOGO}" alt="MarketList"></div><div class="hm"><button class="tile" style="background:linear-gradient(135deg,#59b0ff,#1d5fd1)" data-a="go-shop"><i>🛒</i><span>Supermercat<small>La teva llista de la compra</small></span></button><button class="tile" style="background:linear-gradient(135deg,#ffb24d,#e8590c)" data-a="go-task"><i>📋</i><span>Encàrrecs<small>Tasques i recordatoris</small></span></button></div></div>`;}
+function homeHtml(){return `<div class="home"><div class="hb"><img class="logo" src="${LOGO}" alt="MarketList"></div><div class="hm">${invBanner()}<button class="tile" style="background:linear-gradient(135deg,#59b0ff,#1d5fd1)" data-a="go-shop"><i>🛒</i><span>Supermercat<small>La teva llista de la compra</small></span></button><button class="tile" style="background:linear-gradient(135deg,#ffb24d,#e8590c)" data-a="go-task"><i>📋</i><span>Encàrrecs<small>Tasques i recordatoris</small></span></button></div></div>`;}
 function authHtml(){const reg=db&&me;return `<div class="home"><div class="hb"><img class="logo sm2" src="${LOGO}" alt="MarketList"></div><div class="hm"><div class="card pad">`+(reg?`<div class="ttl">👋 Crea el teu compte</div><input id="r_n" placeholder="Nom"><input id="r_c" placeholder="Cognom"><input id="r_u" placeholder="Nom d'usuari"><input id="r_e" type="email" placeholder="Correu electrònic"><button class="pri" style="width:100%;margin-top:10px" data-a="reg">Registrar-me i entrar</button><div class="note">Entres amb la teva sessió de claude.ai, per això no hi ha contrasenya pròpia.</div>`:`<div class="ttl">🔐 Inicia sessió</div><p>Per desar les dades al núvol i compartir llistes, obre MarketList amb la sessió de claude.ai iniciada.</p>`)+`</div><div class="warn">Si continues sense registrar-te, els canvis no es conservaran en tancar o abandonar l'aplicació.</div><button class="sec" style="width:100%" data-a="guest">Continuar sense registrar-se</button></div></div>`;}
 function sideHtml(){const s=fn=='shop',b=(a,i,t)=>`<button data-a="${a}">${i} ${t}</button>`;return `<div id="side" class="${side?'open':''}"><img class="logo" src="${LOGO}" alt="MarketList"><button class="new" data-a="nav-new">${s?'➕ Nou Producte':'➕ Nova Tasca'}</button>${b('nav-main','🏠','Menú Principal')}${b('nav-hist','🧾',s?'Historial de compres':'Historial de tasques')}${b('nav-shared','🤝',s?'Llistes compartides':'Tasques compartides')}${b('nav-edit','✏️',s?'Editar supermercats':'Editar botigues')}${b('nav-account','👤','Compte')}${b('nav-cfg','⚙️','Configuració')}${b('swap','🔄','Canviar de funció')}</div>`;}
 function newShop(){return `<div class="card pad"><div class="ttl">🛍️ Nou producte</div><label>Producte</label><input id="n" placeholder="Ex.: Mandarines"><div class="row"><div><label>Quantitat</label><input id="q" type="number" min="0" step="any" value="1"></div><div><label>Unitat</label>${unitSel()}</div></div><label>📅 Data de compra (opcional)</label>${dateField('d','')}<div class="note">La data ha de ser la del dia de la compra.</div>${storePick(S.stores)}<button class="pri" style="width:100%;margin-top:14px" data-a="saveItem">Guardar</button></div>`;}
@@ -458,7 +460,7 @@ function shopMain(){const st=S.stores.filter(s=>allS||S.items.some(i=>i.store==s
  return `<button class="pri" style="width:100%;font-size:18px" data-a="startbuy" ${S.items.length?'':'disabled'}>Començar compra</button><h3>${allS?'Tots els supermercats':'Botigues amb productes pendents'}</h3>`+
  (st.map(s=>`<div class="card row" data-a="openStore" data-id="${s.id}"><div style="flex:1"><h4 style="margin:0">🏪 ${e(s.name)}</h4><small>${e(S.items.filter(i=>i.store==s.id).slice(0,3).map(i=>i.name).join(', '))}</small></div><span class="badge">${S.items.filter(i=>i.store==s.id).length}</span><span style="flex:0">›</span></div>`).join('')||'<div class="dim">No hi ha productes pendents.<br>Afegeix-ne amb «Nou Producte».</div>')+
  ``;}
-function storeView(){const its=S.items.filter(i=>i.store==sel);return `<button class="sec" data-a="menu">‹ Enrere</button>`+(its.map(i=>`<div class="card"><div class="row"><div style="flex:1">${itLine(i)}</div><button style="flex:0;color:#b3261e" data-a="delItem" data-id="${i.id}">🗑️</button></div></div>`).join('')||'<div class="dim">Res pendent</div>');}
+function storeView(){const its=S.items.filter(i=>i.store==sel);return `<button class="sec" data-a="menu">‹ Enrere</button><button class="pri" style="width:100%;margin:10px 0" data-a="buyStore" ${its.length?'':'disabled'}>Començar compra</button>`+(its.map(i=>`<div class="card"><div class="row"><div style="flex:1">${itLine(i)}</div><button style="flex:0;color:#b3261e" data-a="delItem" data-id="${i.id}">🗑️</button></div></div>`).join('')||'<div class="dim">Res pendent</div>');}
 function taskMain(){const L=[...S.tasks].sort((a,b)=>(a.date||'9')+(a.time||'')>(b.date||'9')+(b.time||'')?1:-1);
  return L.map(t=>`<div class="swr"><button class="swd l" data-a="swdel" data-id="${t.id}">🗑️</button><button class="swd r" data-a="swdel" data-id="${t.id}">🗑️</button><div class="card swc" data-a="openTask" data-id="${t.id}"><div class="row"><div style="flex:1"><b>${e(t.title)}</b>${t.time?' · '+e(t.time):''}<br><small>${fmtD(t.date)}${t.store?' · '+e(sName(S.tstores,t.store)):''}</small></div><button class="pri" style="flex:0;white-space:nowrap" data-a="doneTask" data-id="${t.id}">✅ Fet</button></div></div></div>`).join('')||'<div class="dim">No tens encàrrecs.<br>Crea\'n un amb «Nova Tasca».</div>';}
 document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a]');if(!t)return;const a=t.dataset.a,id=t.dataset.id;
@@ -483,4 +485,23 @@ Nou lloc=Nuevo lugar|New place|Nouveau lieu|新地点|Leku berria
 Nom del nou lloc=Nombre del nuevo lugar|Name of the new place|Nom du nouveau lieu|新地点名称|Leku berriaren izena
 Lloc=Lugar|Place|Lieu|地点|Lekua`.split('\n').forEach(l=>{const i=l.indexOf('=');DICT[l.slice(0,i)]=l.slice(i+1).split('|');});
 document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a="share-store"]');if(t)share('store',sel);});
+const invBanner=()=>inv?`<div class="card pad inv"><div class="ttl">🔔 Has rebut una llista compartida</div><p class="note">Codi: <b>${e(inv)}</b></p><div class="row"><button class="pri" data-a="invadd">Afegir-la</button><button class="sec" data-a="invno">Ara no</button></div></div>`:'';
+document.addEventListener('click',async ev=>{const t=ev.target.closest('[data-a]');if(!t)return;const a=t.dataset.a;
+ if(a=='invno'){inv=null;render();}
+ else if(a=='invadd'){const id=inv,k=await join(id);inv=null;
+  if(!k){modal={msg:"No s'ha trobat cap llista amb aquest codi.",info:1};render();return;}
+  try{history.replaceState(null,'',location.pathname+location.search);}catch(x){}
+  fn=k;openSh(id);}});
+`Has rebut una llista compartida=Has recibido una lista compartida|You received a shared list|Vous avez reçu une liste partagée|你收到了一个共享清单|Zerrenda partekatu bat jaso duzu
+Codi:=Código:|Code:|Code :|代码：|Kodea:
+Afegir-la=Añadirla|Add it|L'ajouter|添加|Gehitu
+Ara no=Ahora no|Not now|Pas maintenant|暂不|Orain ez`.split('\n').forEach(l=>{const i=l.indexOf('=');DICT[l.slice(0,i)]=l.slice(i+1).split('|');});
+let buyScope=null;
+const inScope=()=>S.items.filter(i=>(buyScope||[]).includes(i.store));
+function pickHtml(m){return `<h3>Quins supermercats vols incloure?</h3>`+m.all.map(id=>`<label class="it" style="opacity:1;font-size:16px"><input type="checkbox" data-a="pickst" data-id="${id}" ${m.pickst.includes(id)?'checked':''}><span>${e(sName(S.stores,id))} <small>(${S.items.filter(i=>i.store==id).length})</small></span></label>`).join('')+`<div class="hrow"><button class="pri" data-a="beginBuy">Començar compra</button><button data-a="close">Tornar enrere</button></div>`;}
+document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a]');if(!t)return;const a=t.dataset.a,id=t.dataset.id;
+ if(a=='pickst'){const L=modal.pickst,i=L.indexOf(id);if(t.checked&&i<0)L.push(id);if(!t.checked&&i>=0)L.splice(i,1);const b=document.querySelector('[data-a="beginBuy"]');if(b)b.disabled=!L.length;}
+ else if(a=='beginBuy'&&modal&&modal.pickst&&modal.pickst.length){buyScope=modal.pickst.slice();buying={};modal=null;view='buy';render();}
+ else if(a=='buyStore'){buyScope=[sel];buying={};view='buy';render();}});
+`Quins supermercats vols incloure?=¿Qué supermercados quieres incluir?|Which supermarkets do you want to include?|Quels supermarchés voulez-vous inclure ?|要包含哪些超市？|Zein supermerkatu sartu nahi dituzu?`.split('\n').forEach(l=>{const i=l.indexOf('=');DICT[l.slice(0,i)]=l.slice(i+1).split('|');});
 </script></body></html>
