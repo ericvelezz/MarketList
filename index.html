@@ -76,6 +76,7 @@ html{-webkit-text-size-adjust:100%}*{-webkit-tap-highlight-color:transparent}but
 .fl{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:20px;margin-right:10px;font-size:20px}.fl svg{width:28px;height:20px;border-radius:3px;box-shadow:0 0 0 1px #0002}
 .inv{background:#fff8e1}
 header{margin:0 -14px;padding:12px 12px 12px 62px;gap:6px}header h1{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}header button:not(.ic){padding:8px 10px;font-size:13px;white-space:nowrap;flex:none}
+header h1.em{font-size:30px;line-height:1}
 </style></head><body>
 <div id="app"></div>
 <script src="config.js"></script>
@@ -248,7 +249,7 @@ function render(keep){
  root.style.setProperty('--acc',S.color||'#1d5fd1');root.style.setProperty('--ac2',fn=='task'?'#ff922b':'#4aa3ff');
  root.style.setProperty('--bg',S.color?`color-mix(in srgb,${S.color} 14%,#fff)`:(fn=='task'?'#ffe6cc':'#dcefff'));
  let h;if(gate)h=authHtml();else if(!fn)h=homeHtml();
- else h=sideHtml()+`<button class="ic burger" data-a="side">${side?'✕':'☰'}</button><div id="scrim" class="scrim ${side?'open':''}" data-a="side"></div><header><h1>${view=='new'||view=='tedit'?'':(view=='main'||view=='store'?'':IC[view]+' ')+TITLES[view]()}</h1>${view=='main'?`<button class="pri" data-a="nav-new">+ ${fn=='shop'?'Producte':'Encàrrec'}</button>`:''}${view=='main'&&fn=='shop'?'<button class="sec" data-a="share-shop">🔗 Compartir</button>':view=='store'?'<button class="sec" data-a="share-store">🔗 Compartir</button>':''}</header>`+body();
+ else h=sideHtml()+`<button class="ic burger" data-a="side">${side?'✕':'☰'}</button><div id="scrim" class="scrim ${side?'open':''}" data-a="side"></div><header><h1${view=='main'?' class="em"':''}>${view=='new'||view=='tedit'?'':view=='main'?(fn=='shop'?'🛒':'📋'):(view=='store'?'':IC[view]+' ')+TITLES[view]()}</h1>${view=='main'?`<button class="pri" data-a="nav-new">+ ${fn=='shop'?'Producte':'Encàrrec'}</button>`:''}${view=='main'&&fn=='shop'?'<button class="sec" data-a="share-shop">🔗 Compartir</button>':view=='store'?'<button class="sec" data-a="share-store">🔗 Compartir</button>':''}</header>`+body();
  const sc=scrollY;$('#app').innerHTML=h+modalHtml();if(keep)scrollTo(0,sc);}
 document.addEventListener('click',ev=>{if(!ev.target.closest('[data-a="reg"]'))return;const ids=['#r_n','#r_c','#r_u','#r_e'],v=ids.map(i=>$(i).value.trim());
  if(v.some(x=>!x)||!/.+@.+/.test(v[3])){modal={msg:'Omple tots els camps amb un correu vàlid.',info:1};render();ids.forEach((k,i)=>$(k).value=v[i]);return;}
