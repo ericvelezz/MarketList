@@ -80,6 +80,7 @@ header h1.em{font-size:30px;line-height:1.2;overflow:visible;flex:none;padding:0
 </style></head><body>
 <div id="app"></div>
 <script src="config.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.1"></script>
 <script>if(!window.supabase)document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"><\/script>');</script>
 <script>
@@ -510,7 +511,7 @@ let editId=null,hOpen=null;
 IC.tedit='✏️';TITLES.tedit=()=>'Encàrrec';
 function newShop(){const it=editId?S.items.find(x=>x.id==editId):null;return `${it?'<button class="sec" data-a="editBack" style="margin-bottom:10px">‹ Enrere</button>':''}<div class="card pad"><div class="ttl">${it?'✏️ Editar producte':'🛍️ Nou producte'}</div><label>Producte</label><input id="n" placeholder="Ex.: Mandarines" value="${e(it?it.name:'')}"><div class="row"><div><label>Quantitat</label><input id="q" type="number" min="0" step="any" value="${e(it?it.qty:'1')}"></div><div><label>Unitat</label>${unitSel(it?it.unit:'')}</div></div><label>📅 Data de compra (opcional)</label>${dateField('d',it?it.date||'':'')}<div class="note">La data ha de ser la del dia de la compra.</div>${storePick(S.stores,it?it.store:null)}<button class="pri" style="width:100%;margin-top:14px" data-a="saveItem">Guardar</button></div>`;}
 function detail(){const t=S.tasks.find(x=>x.id==sel);if(!t)return'';const row=(ic,l,v)=>v?`<div class="kv"><label>${ic} ${l}</label><b>${e(v)}</b></div>`:'';
- return `<button class="sec" data-a="menu">‹ Enrere</button><div class="card pad" style="margin-top:12px"><div class="ttl">📝 ${e(t.title)}</div>${row('📅','Dia',t.date?fmtD(t.date):'')}${row('⏰','Hora',t.time)}${row('📍','Lloc',sName(S.tstores,t.store))}${row('🏠','Adreça i detalls',t.addr)}${row('📄','Descripció',t.desc)}</div><button class="pri" style="width:100%;margin-top:6px" data-a="editTask">✏️ Editar</button><button class="sec" style="width:100%;margin-top:10px" data-a="shareTask">Compartir</button><button class="pri" style="width:100%;margin-top:10px;background:#2f9e44" data-a="doneTask" data-id="${t.id}">✅ Marcar com a feta</button>`;}
+ return `<button class="sec" data-a="menu">‹ Enrere</button><div class="card pad" style="margin-top:12px"><div class="ttl">📝 ${e(t.title)}</div>${row('📅','Dia',t.date?fmtD(t.date):'')}${row('⏰','Hora',t.time)}${row('📍','Lloc',sName(S.tstores,t.store))}${row('🏠','Adreça i detalls',t.addr)}${row('📄','Descripció',t.desc)}</div><button class="sec" style="width:100%;margin-top:6px" data-a="gcal" data-id="${t.id}">📅 ${t.gcal?'Actualitzar a Google Calendar':'Afegir a Google Calendar'}</button><button class="pri" style="width:100%;margin-top:10px" data-a="editTask">✏️ Editar</button><button class="sec" style="width:100%;margin-top:10px" data-a="shareTask">Compartir</button><button class="pri" style="width:100%;margin-top:10px;background:#2f9e44" data-a="doneTask" data-id="${t.id}">✅ Marcar com a feta</button>`;}
 function taskEditView(){const t=S.tasks.find(x=>x.id==sel);if(!t)return'';return `<button class="sec" data-a="detailBack" style="margin-bottom:10px">‹ Enrere</button>${taskForm(t).replace('<div class="card">','<div class="card"><div class="ttl">✏️ Editar tasca</div>')}<button class="pri" style="width:100%" data-a="updTask">Guardar</button>`;}
 function histView(){const g=a=>a.map(i=>`<div class="it"><span>${itLine(i)} · <small>${e(i.sn)}</small></span></div>`).join('')||'<div class="dim" style="padding:6px">Cap</div>';
  return (S.history.length?`<button class="sec" style="width:100%;color:#b3261e" data-a="histAll">🗑️ Esborra totes les compres</button>`:'')+S.history.map(h=>{const sts=[...new Set(h.bought.concat(h.pending).map(i=>i.sn).filter(Boolean))].join(', '),op=hOpen==h.id;
@@ -532,4 +533,28 @@ Editar=Editar|Edit|Modifier|编辑|Editatu
 Hora=Hora|Time|Heure|时间|Ordua
 Adreça i detalls=Dirección y detalles|Address and details|Adresse et détails|地址和详情|Helbidea eta xehetasunak`.split('\n').forEach(l=>{const i=l.indexOf('=');DICT[l.slice(0,i)]=l.slice(i+1).split('|');});
 PAT.push([/^Vols eliminar (.+?)\? També s'eliminaran els seus productes pendents\.$/,['¿Quieres eliminar $1? También se eliminarán sus productos pendientes.','Delete $1? Its pending products will be deleted too.','Supprimer $1 ? Ses produits en attente seront aussi supprimés.','要删除$1吗？其待买商品也将被删除。','$1 ezabatu nahi duzu? Egiteke dituen produktuak ere ezabatuko dira.']]);
+const ginfo=m=>{modal={msg:m,info:1};render();};
+const lp=n=>String(n).padStart(2,'0'),ldt=d=>`${d.getFullYear()}-${lp(d.getMonth()+1)}-${lp(d.getDate())}T${lp(d.getHours())}:${lp(d.getMinutes())}:00`;
+function gToken(){return new Promise((res,rej)=>{if(!window.google||!google.accounts)return rej('gsi');
+ const tc=google.accounts.oauth2.initTokenClient({client_id:CFG.gclient,scope:'https://www.googleapis.com/auth/calendar.events',callback:r=>r.access_token?res(r.access_token):rej(r.error||'err'),error_callback:e=>rej((e&&e.type)||'err')});tc.requestAccessToken();});}
+async function addGcal(id){const t=S.tasks.find(x=>x.id==id);if(!t)return;
+ if(!CFG.gclient||CFG.gclient.includes('ENGANXA'))return ginfo('Falta configurar Google Calendar (mira GOOGLE-CALENDAR.md).');
+ if(!t.date)return ginfo("Cal posar un dia a l'encàrrec per afegir-lo a Google Calendar.");
+ let tok;try{tok=await gToken();}catch(x){return ginfo("No s'ha pogut connectar amb Google. Torna-ho a provar.");}
+ const tz=Intl.DateTimeFormat().resolvedOptions().timeZone,ev={summary:t.title,description:t.desc||'',location:[sName(S.tstores,t.store),t.addr].filter(Boolean).join(', '),reminders:{useDefault:false,overrides:[{method:'popup',minutes:t.time?1440:900}]}};
+ if(t.time){const st=new Date(t.date+'T'+t.time+':00'),en=new Date(st.getTime()+3600000);ev.start={dateTime:ldt(st),timeZone:tz};ev.end={dateTime:ldt(en),timeZone:tz};}
+ else{const d=new Date(t.date+'T00:00');d.setDate(d.getDate()+1);ev.start={date:t.date};ev.end={date:ldt(d).slice(0,10)};}
+ const call=(m,u)=>fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events'+u,{method:m,headers:{Authorization:'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify(ev)});
+ try{let r=t.gcal?await call('PUT','/'+t.gcal):await call('POST','');if(!r.ok&&t.gcal)r=await call('POST','');
+  if(!r.ok)return ginfo("No s'ha pogut afegir a Google Calendar.");
+  t.gcal=(await r.json()).id;save();ginfo(t.time?"Afegit a Google Calendar. T'avisarà 24 hores abans.":"Afegit a Google Calendar. T'avisarà el dia abans a les 9:00.");}
+ catch(x){ginfo("No s'ha pogut afegir a Google Calendar.");}}
+document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a="gcal"]');if(t)addGcal(t.dataset.id);});
+`Afegir a Google Calendar=Añadir a Google Calendar|Add to Google Calendar|Ajouter à Google Agenda|添加到 Google 日历|Gehitu Google Calendar-era
+Actualitzar a Google Calendar=Actualizar en Google Calendar|Update in Google Calendar|Mettre à jour dans Google Agenda|在 Google 日历中更新|Eguneratu Google Calendar-en
+Cal posar un dia a l'encàrrec per afegir-lo a Google Calendar.=Hay que poner un día al encargo para añadirlo a Google Calendar.|Set a date for the errand to add it to Google Calendar.|Il faut indiquer un jour pour l'ajouter à Google Agenda.|需要先为待办设置日期才能添加到 Google 日历。|Egitekoari egun bat jarri behar zaio Google Calendar-era gehitzeko.
+No s'ha pogut connectar amb Google. Torna-ho a provar.=No se ha podido conectar con Google. Inténtalo de nuevo.|Could not connect to Google. Please try again.|Connexion à Google impossible. Réessayez.|无法连接到 Google，请重试。|Ezin izan da Googlerekin konektatu. Saiatu berriro.
+Afegit a Google Calendar. T'avisarà 24 hores abans.=Añadido a Google Calendar. Te avisará 24 horas antes.|Added to Google Calendar. It will remind you 24 hours before.|Ajouté à Google Agenda. Rappel 24 heures avant.|已添加到 Google 日历，将在 24 小时前提醒你。|Google Calendar-era gehitu da. 24 ordu lehenago abisatuko dizu.
+Afegit a Google Calendar. T'avisarà el dia abans a les 9:00.=Añadido a Google Calendar. Te avisará el día anterior a las 9:00.|Added to Google Calendar. It will remind you the day before at 9:00.|Ajouté à Google Agenda. Rappel la veille à 9 h.|已添加到 Google 日历，将在前一天 9:00 提醒你。|Google Calendar-era gehitu da. Aurreko egunean 9:00etan abisatuko dizu.
+No s'ha pogut afegir a Google Calendar.=No se ha podido añadir a Google Calendar.|Could not add to Google Calendar.|Impossible d'ajouter à Google Agenda.|无法添加到 Google 日历。|Ezin izan da Google Calendar-era gehitu.`.split('\n').forEach(l=>{const i=l.indexOf('=');DICT[l.slice(0,i)]=l.slice(i+1).split('|');});
 </script></body></html>
