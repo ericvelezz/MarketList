@@ -87,6 +87,21 @@ html{-webkit-text-size-adjust:100%}*{-webkit-tap-highlight-color:transparent}but
 .pri{background:linear-gradient(135deg,var(--acc),color-mix(in srgb,var(--acc) 72%,#000))}.pimg{width:100%;max-height:320px;object-fit:contain;border-radius:14px;background:#f2f5fa;margin:6px 0 10px;display:block}
 header{margin:0 -14px;padding:12px 12px 12px 62px;gap:6px}header h1{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}header button:not(.ic){padding:8px 10px;font-size:13px;white-space:nowrap;flex:none}
 header h1.em{font-size:30px;line-height:1.2;overflow:visible;flex:none;padding:0;margin:0}.spread{gap:8px}header h1.em{display:none}header.spread button:not(.ic){flex:1;font-size:14px;padding:10px 8px}.bsp{flex:none;width:44px;height:44px}header{padding-left:12px}
+
+.gtabs{display:flex;gap:8px;margin:4px 0 12px}.gtab{flex:1;padding:12px 8px;border-radius:14px;background:#fff;color:var(--acc);font-weight:700;box-shadow:0 2px 6px -3px #0004}.gtab.on{background:var(--acc);color:#fff}
+.gh{font-size:20px;font-weight:800;margin:22px 4px 6px}.gp{font-size:15px;line-height:1.45;margin:6px 4px}
+.gs{display:flex;gap:12px;background:#fff;border-radius:20px;padding:14px;margin:10px 0;box-shadow:0 6px 16px -8px #0003;border-left:7px solid var(--ac2,#4aa3ff)}
+.gn{flex:0 0 34px;height:34px;border-radius:50%;background:var(--acc);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center}
+.gb{flex:1;min-width:0}.gt{font-weight:800;font-size:17px;margin-bottom:3px}.gd{font-size:15px;line-height:1.4}
+.gm{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.gb1{display:inline-block;padding:10px 14px;border-radius:14px;background:var(--acc);color:#fff;font-weight:700;font-size:14px}.gb1.s{background:#fff;color:var(--acc);border:1px solid #0003}.gb1.g{background:#2f9e44}
+.gchip{padding:6px 10px;border-radius:999px;font-weight:700;font-size:13px}
+.gbox{display:block;width:100%;box-sizing:border-box;background:#fff6d6;border-radius:12px;padding:10px;font-size:14px;font-weight:600}
+.gtiles{display:flex;gap:8px;width:100%}.gtiles span{flex:1;border-radius:16px;padding:14px 6px;color:#fff;font-weight:800;text-align:center;font-size:15px}
+.gflow{display:flex;flex-direction:column;gap:22px;margin:14px 4px 22px}.gflow div{background:#fff;border-radius:16px;padding:12px;text-align:center;font-weight:700;font-size:15px;box-shadow:0 3px 8px -4px #0004;position:relative}.gflow i{font-style:normal;font-size:24px;margin-right:8px}
+.gflow div:not(:last-child)::after{content:'⬇️';position:absolute;left:0;right:0;bottom:-22px;font-size:16px;line-height:22px}
+.gc{border-radius:16px;padding:12px 14px;margin:10px 0;font-size:14.5px;line-height:1.4;background:#fff6d6}.gc.ok{background:#e3f6e8}
+.emptyadd{min-height:55vh;display:flex;align-items:center;justify-content:center}
 </style></head><body>
 <div id="app"></div>
 <script src="config.js"></script>
@@ -182,7 +197,7 @@ function account(){const a=acc||{};return `<div class="card"><label>Nom</label><
 const TITLES={main:()=>fn=='shop'?'Supermercat':'Encàrrecs',new:()=>fn=='shop'?'Nou producte':'Nova tasca',hist:()=>fn=='shop'?'Historial de compres':'Historial de tasques',shared:()=>fn=='shop'?'Llistes compartides':'Tasques compartides',edit:()=>fn=='shop'?'Editar supermercats':'Editar botigues',account:()=>'Compte',buy:()=>'Compra en curs',detail:()=>'Encàrrec',sh:()=>'Llista compartida'};
 function body(){
  switch(view){case 'main':return fn=='shop'?shopMain():taskMain();case 'new':return fn=='shop'?newShop():taskForm().replace('<div class="card">','<div class="card"><div class="ttl">📝 Nova tasca</div>')+'<button class="pri" style="width:100%" data-a="saveTask">Guardar</button>';
- case 'cfg':return cfgView();case 'addst':return addStView();case 'prod':return prodView();case 'tedit':return taskEditView();case 'store':return storeView();case 'hist':return fn=='task'?taskHist():histView();case 'shared':return sharedList();case 'edit':return editStores();case 'account':return account();case 'buy':return buyView();case 'detail':return detail();case 'sh':return shView();}}
+ case 'cfg':return cfgView();case 'addst':return addStView();case 'prod':return prodView();case 'tedit':return taskEditView();case 'store':return storeView();case 'hist':return fn=='task'?taskHist():histView();case 'shared':return sharedList();case 'edit':return editStores();case 'account':return account();case 'buy':return buyView();case 'detail':return detail();case 'sh':return shView();case 'guide':return guideView();}}
 function modalHtml(){const m=modal;if(!m)return'';let h='';
  if(m.share)h=`<h3>Llista compartida</h3><p>Envia aquest enllaç. La persona haurà d'obrir l'aplicació amb sessió iniciada i amb accés a la pàgina.</p><input readonly value="${e(m.share)}" onclick="this.select()"><div class="codebox">${m.code}</div><p class="note">Digues-li aquest codi: l'haurà d'escriure a l'apartat de compartits.</p><div class="hrow"><button class="pri" data-a="copy">Copiar</button><a href="https://wa.me/?text=${encodeURIComponent(m.share+' (codi: '+m.code+')')}" target="_blank" rel="noopener" style="flex:1"><button class="sec" style="width:100%">WhatsApp</button></a></div><div class="hrow"><button data-a="close" style="width:100%">Tancar</button></div>`;
  else if(m.newst)h=newstModal();
@@ -255,14 +270,14 @@ const IC={main:'🏠',new:'➕',hist:'🧾',shared:'🤝',edit:'✏️',account:
 const brand=()=>`<div class="hb"><img class="logo" src="${LOGO}" alt="MarketList"><div class="brand"><span class="mk">Market</span>List</div></div>`;
 function homeHtml(){return `<div class="home"><div class="hb"><img class="logo" src="${LOGO}" alt="MarketList"></div><div class="hm">${invBanner()}<button class="tile" style="background:linear-gradient(135deg,#59b0ff,#1d5fd1)" data-a="go-shop"><i>🛒</i><span>Supermercat<small>La teva llista de la compra</small></span></button><button class="tile" style="background:linear-gradient(135deg,#ffb24d,#e8590c)" data-a="go-task"><i>📋</i><span>Encàrrecs<small>Tasques i recordatoris</small></span></button></div></div>`;}
 function authHtml(){const reg=db&&me;return `<div class="home"><div class="hb"><img class="logo sm2" src="${LOGO}" alt="MarketList"></div><div class="hm"><div class="card pad">`+(reg?`<div class="ttl">👋 Crea el teu compte</div><input id="r_n" placeholder="Nom"><input id="r_c" placeholder="Cognom"><input id="r_u" placeholder="Nom d'usuari"><input id="r_e" type="email" placeholder="Correu electrònic"><button class="pri" style="width:100%;margin-top:10px" data-a="reg">Registrar-me i entrar</button><div class="note">Entres amb la teva sessió de claude.ai, per això no hi ha contrasenya pròpia.</div>`:`<div class="ttl">🔐 Inicia sessió</div><p>Per desar les dades al núvol i compartir llistes, obre MarketList amb la sessió de claude.ai iniciada.</p>`)+`</div><div class="warn">Si continues sense registrar-te, els canvis no es conservaran en tancar o abandonar l'aplicació.</div><button class="sec" style="width:100%" data-a="guest">Continuar sense registrar-se</button></div></div>`;}
-function sideHtml(){const s=fn=='shop',b=(a,i,t)=>`<button data-a="${a}">${i} ${t}</button>`;return `<div id="side" class="${side?'open':''}"><img class="logo" src="${LOGO}" alt="MarketList"><button class="new" data-a="nav-new">${s?'➕ Nou Producte':'➕ Nova Tasca'}</button>${b('nav-main','🏠','Menú Principal')}${b('nav-hist','🧾',s?'Historial de compres':'Historial de tasques')}${b('nav-shared','🤝',s?'Llistes compartides':'Tasques compartides')}${b('nav-edit','✏️',s?'Editar supermercats':'Editar botigues')}${b('nav-account','👤','Compte')}${b('nav-cfg','⚙️','Configuració')}${b('swap','🔄','Canviar de funció')}</div>`;}
+function sideHtml(){const s=fn=='shop',b=(a,i,t)=>`<button data-a="${a}">${i} ${t}</button>`;return `<div id="side" class="${side?'open':''}"><img class="logo" src="${LOGO}" alt="MarketList"><button class="new" data-a="nav-new">${s?'➕ Nou Producte':'➕ Nova Tasca'}</button>${b('nav-main','🏠','Menú Principal')}${b('nav-hist','🧾',s?'Historial de compres':'Historial de tasques')}${b('nav-shared','🤝',s?'Llistes compartides':'Tasques compartides')}${b('nav-edit','✏️',s?'Editar supermercats':'Editar botigues')}${b('nav-account','👤','Compte')}${b('nav-guide','📖',"Guia d'ús")}${b('nav-cfg','⚙️','Configuració')}${b('swap','🔄','Canviar de funció')}</div>`;}
 function newShop(){return `<div class="card pad"><div class="ttl">🛍️ Nou producte</div><label>Producte</label><input id="n" placeholder="Ex.: Mandarines"><div class="row"><div><label>Quantitat</label><input id="q" type="number" min="0" step="any" value="1"></div><div><label>Unitat</label>${unitSel()}</div></div><label>📅 Data de compra (opcional)</label>${dateField('d','')}<div class="note">La data ha de ser la del dia de la compra.</div>${storePick(S.stores)}<button class="pri" style="width:100%;margin-top:14px" data-a="saveItem">Guardar</button></div>`;}
 function account(){const p=S.profile||{},a=acc||{},r=(l,v)=>`<div class="kv"><label>${l}</label><b>${e(v||'—')}</b></div>`;return `<div class="card pad"><div class="avatar">${e((p.nom||a.name||'?')[0])}</div>${r('Nom',p.nom||a.name)}${r('Cognom',p.cognom)}${r(`Nom d'usuari`,p.user)}${r('Correu electrònic',p.email)}</div>${me?'':'<div class="warn">Sessió no iniciada: les dades són temporals.</div>'}${me?'<button class="sec" style="width:100%;margin-top:10px" data-a="logout">🚪 Tancar sessió</button>':''}`;}
 function render(keep){
  root.style.setProperty('--acc',S.color||'#1d5fd1');root.style.setProperty('--ac2',fn=='task'?'#ff922b':'#4aa3ff');
  root.style.setProperty('--bg',S.color?`color-mix(in srgb,${S.color} 14%,#fff)`:(fn=='task'?'#ffe6cc':'#dcefff'));
  let h;if(gate)h=authHtml();else if(!fn)h=homeHtml();
- else h=sideHtml()+`<button class="ic burger" data-a="side">${side?'✕':'☰'}</button><div id="scrim" class="scrim ${side?'open':''}" data-a="side"></div><header class="${view=='main'?'spread':''}"><span class="bsp"></span><h1${view=='main'?' class="em"':''}>${view=='new'||view=='tedit'?'':view=='main'?(fn=='shop'?'🛒':'📋'):(view=='store'?'':IC[view]+' ')+TITLES[view]()}</h1>${view=='main'?`<button class="pri" data-a="nav-new">+ ${fn=='shop'?'Producte':'Encàrrec'}</button>`:''}${view=='main'&&fn=='shop'?'<button class="sec" data-a="share-shop">🔗 Compartir</button>':view=='store'?'<button class="sec" data-a="share-store">🔗 Compartir</button>':''}</header>`+body();
+ else h=sideHtml()+`<button class="ic burger" data-a="side">${side?'✕':'☰'}</button><div id="scrim" class="scrim ${side?'open':''}" data-a="side"></div><header class="${view=='main'||view=='store'?'spread':''}"><span class="bsp"></span><h1${view=='main'||view=='store'?' class="em"':''}>${view=='new'||view=='tedit'?'':view=='main'?(fn=='shop'?'🛒':'📋'):(view=='store'?'':IC[view]+' ')+TITLES[view]()}</h1>${view=='main'?`<button class="pri" data-a="nav-new">+ ${fn=='shop'?'Producte':'Encàrrec'}</button>`:''}${view=='main'&&fn=='shop'?'<button class="sec" data-a="share-shop">🔗 Compartir</button>':view=='store'?(S.items.some(i=>i.store==sel)?'<button class="pri" data-a="addProd">+ Producte</button>':'')+'<button class="sec" data-a="share-store">🔗 Compartir</button>':''}</header>`+body();
  const sc=scrollY;$('#app').innerHTML=h+modalHtml();if(keep)scrollTo(0,sc);}
 document.addEventListener('click',ev=>{if(!ev.target.closest('[data-a="reg"]'))return;const ids=['#r_n','#r_c','#r_u','#r_e'],v=ids.map(i=>$(i).value.trim());
  if(v.some(x=>!x)||!/.+@.+/.test(v[3])){modal={msg:'Omple tots els camps amb un correu vàlid.',info:1};render();ids.forEach((k,i)=>$(k).value=v[i]);return;}
@@ -521,7 +536,7 @@ document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a]');if(
 `Quins supermercats vols incloure?=¿Qué supermercados quieres incluir?|Which supermarkets do you want to include?|Quels supermarchés voulez-vous inclure ?|要包含哪些超市？|Zein supermerkatu sartu nahi dituzu?`.split('\n').forEach(l=>{const i=l.indexOf('=');DICT[l.slice(0,i)]=l.slice(i+1).split('|');});
 let editId=null,hOpen=null;
 IC.tedit='✏️';TITLES.tedit=()=>'Encàrrec';
-function newShop(){const it=editId?S.items.find(x=>x.id==editId):null;if(!photoInit){draftPhoto=it?it.photo||null:null;photoInit=true;}return `${it||newFor?'<button class="sec" data-a="editBack" style="margin-bottom:10px">‹ Enrere</button>':''}<div class="card pad"><div class="ttl">${it?'✏️ Editar producte':'🛍️ Nou producte'}</div><label>Producte</label><input id="n" placeholder="Ex.: Mandarines" value="${e(it?it.name:'')}"><div class="row"><div><label>Quantitat</label><input id="q" type="number" min="0" step="any" value="${e(it?it.qty:'1')}"></div><div><label>Unitat</label>${unitSel(it?it.unit:'')}</div></div><label>📅 Data de compra (opcional)</label>${dateField('d',it?it.date||'':'')}<div class="note">La data ha de ser la del dia de la compra.</div>${storePick(S.stores,it?it.store:newFor)}<label>📷 Foto (opcional)</label><div id="pbox">${photoBox()}</div><button class="pri" style="width:100%;margin-top:14px" data-a="saveItem">Guardar</button></div>`;}
+function newShop(){const it=editId?S.items.find(x=>x.id==editId):null;if(!photoInit){draftPhoto=it?it.photo||null:null;photoInit=true;}return `${it||newFor?'<button class="sec" data-a="editBack" style="margin-bottom:10px">‹ Enrere</button>':''}<div class="card pad"><div class="ttl">${it?'✏️ Editar producte':'🛍️ Nou producte'}</div><label>Producte</label><input id="n" placeholder="Ex.: Mandarines" value="${e(it?it.name:'')}"><div class="row"><div><label>Quantitat</label><input id="q" type="number" min="0" step="any" value="${e(it?it.qty:'1')}"></div><div><label>Unitat</label>${unitSel(it?it.unit:'')}</div></div><label>📅 Data de compra (opcional)</label>${dateField('d',it?it.date||'':'')}<div class="note">La data ha de ser la del dia de la compra.</div>${newFor&&!it?storeFixed():storePick(S.stores,it?it.store:newFor)}<label>📷 Foto (opcional)</label><div id="pbox">${photoBox()}</div><button class="pri" style="width:100%;margin-top:14px" data-a="saveItem">Guardar</button></div>`;}
 function detail(){const t=S.tasks.find(x=>x.id==sel);if(!t)return'';const row=(ic,l,v)=>v?`<div class="kv"><label>${ic} ${l}</label><b>${e(v)}</b></div>`:'';
  return `<button class="sec" data-a="menu">‹ Enrere</button><div class="card pad" style="margin-top:12px"><div class="ttl">📝 ${e(t.title)}</div>${row('📅','Dia',t.date?fmtD(t.date):'')}${row('⏰','Hora',t.time)}${row('📍','Lloc',sName(S.tstores,t.store))}${row('🏠','Adreça i detalls',t.addr)}${row('📄','Descripció',t.desc)}</div><button class="sec" style="width:100%;margin-top:6px" data-a="gcal" data-id="${t.id}">📅 ${t.gcal?'Actualitzar a Google Calendar':'Afegir a Google Calendar'}</button><button class="pri" style="width:100%;margin-top:10px" data-a="editTask">✏️ Editar</button><button class="sec" style="width:100%;margin-top:10px" data-a="shareTask">Compartir</button><button class="pri" style="width:100%;margin-top:10px;background:#2f9e44" data-a="doneTask" data-id="${t.id}">✅ Marcar com a feta</button>`;}
 function taskEditView(){const t=S.tasks.find(x=>x.id==sel);if(!t)return'';return `<button class="sec" data-a="detailBack" style="margin-bottom:10px">‹ Enrere</button>${taskForm(t).replace('<div class="card">','<div class="card"><div class="ttl">✏️ Editar tasca</div>')}<button class="pri" style="width:100%" data-a="updTask">Guardar</button>`;}
@@ -607,8 +622,9 @@ function shopMain(){return `<button class="bigadd" data-a="addst">➕ Afegir sup
 function addStView(){return `<button class="sec" data-a="menu">‹ Enrere</button><h3 style="margin:12px 4px 10px">Tria un supermercat</h3><div class="pgrid">`+Object.keys(BR).map(k=>{const b=mk(k),ex=S.stores.find(s=>(brandOf(s)||{}).k==k);return `<button class="ptile" style="background:${b.c};color:${b.t}" data-a="pickBrand" data-id="${k}">${logoW(b,60)}<b>${b.n}</b>${ex?'<small>✓ Ja afegit</small>':''}</button>`;}).join('')+`<button class="ptile alt" data-a="newstOpen"><span style="font-size:34px">➕</span><b>Un altre supermercat</b></button></div>`;}
 function newstModal(){return `<h3>Un altre supermercat</h3><input id="nstn" placeholder="Nom del supermercat"><div class="hrow"><button class="pri" data-a="newstSave">Guardar</button><button data-a="close">Tornar enrere</button></div>`;}
 function storeView(){const st=S.stores.find(x=>x.id==sel);if(!st)return'';const b=brandOf(st),c=b?b.c:'#8a96a8',its=S.items.filter(i=>i.store==sel);
- return `<button class="sec" data-a="menu">‹ Enrere</button><div class="sbanner" style="background:linear-gradient(135deg,${c},color-mix(in srgb,${c} 70%,#000));color:${b?b.t:'#fff'}">${logoW(b,56)}<div><div class="sn">${e(st.name)}</div><small>${its.length}</small></div></div><button class="pri" style="width:100%;margin-bottom:10px" data-a="addProd">➕ Afegir producte</button><button class="sec" style="width:100%;margin-bottom:6px" data-a="buyStore" ${its.length?'':'disabled'}>Començar compra</button>`+
- (its.map(i=>`<div class="card"><div class="row" data-a="openProd" data-id="${i.id}">${i.photo?`<img class="thumb" src="${i.photo}" alt="">`:''}<div style="flex:1">${itLine(i)}</div><button style="flex:0" data-a="editItem" data-id="${i.id}">✏️</button><button style="flex:0;color:#b3261e" data-a="delItem" data-id="${i.id}">🗑️</button></div></div>`).join('')||'<div class="dim">Res pendent</div>');}
+ return `<button class="sec" data-a="menu">‹ Enrere</button><div class="sbanner" style="background:linear-gradient(135deg,${c},color-mix(in srgb,${c} 70%,#000));color:${b?b.t:'#fff'}">${logoW(b,56)}<div><div class="sn">${e(st.name)}</div><small>${its.length}</small></div></div>`+(its.length?`<button class="sec" style="width:100%;margin-bottom:6px" data-a="buyStore">Començar compra</button>`:'')+
+ (its.map(i=>`<div class="card"><div class="row" data-a="openProd" data-id="${i.id}">${i.photo?`<img class="thumb" src="${i.photo}" alt="">`:''}<div style="flex:1">${itLine(i)}</div><button style="flex:0" data-a="editItem" data-id="${i.id}">✏️</button><button style="flex:0;color:#b3261e" data-a="delItem" data-id="${i.id}">🗑️</button></div></div>`).join('')||'<div class="emptyadd"><button class="bigadd" data-a="addProd">➕ Afegir producte</button></div>');}
+function storeFixed(){const st=S.stores.find(x=>x.id==newFor);pk=newFor;return `<div class="gp" style="margin:12px 0 4px"><b>🏪 ${e(st?st.name:'')}</b></div><input id="ns" type="hidden" value="">`;}
 document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a]');if(!t)return;const a=t.dataset.a,id=t.dataset.id;
  if(a=='addst'){view='addst';render();}
  else if(a=='pickBrand'){let s=S.stores.find(x=>(brandOf(x)||{}).k==id);if(!s){s={id:uid(),name:BR[id][0],brand:id};S.stores.push(s);save();}sel=s.id;view='store';render();}
@@ -623,4 +639,67 @@ Un altre supermercat=Otro supermercado|Another supermarket|Un autre supermarché
 Nom del supermercat=Nombre del supermercado|Supermarket name|Nom du supermarché|超市名称|Supermerkatuaren izena
 Ja afegit=Ya añadido|Already added|Déjà ajouté|已添加|Gehituta dago
 Afegir producte=Añadir producto|Add product|Ajouter un produit|添加商品|Gehitu produktua`.split('\n').forEach(l=>{const i=l.indexOf('=');DICT[l.slice(0,i)]=l.slice(i+1).split('|');});
+
+var gtab='app';
+const GB=t=>`<span class="gb1">${t}</span>`,GBS=t=>`<span class="gb1 s">${t}</span>`;
+const GUIDE={app:[
+{p:"Aquesta guia t'explica, pas a pas, com funciona MarketList."},
+{m:'<div class="gtiles"><span style="background:linear-gradient(135deg,#59b0ff,#1d5fd1)">🛒 Supermercat</span><span style="background:linear-gradient(135deg,#ffb24d,#e8590c)">📋 Encàrrecs</span></div>'},
+{p:"MarketList té dues funcions: Supermercat, per fer la llista de la compra, i Encàrrecs, per apuntar tasques pendents."},
+{s:["El menú lateral","Toca ☰ a dalt a l'esquerra per obrir-lo. Hi trobaràs les opcions per crear coses noves, l'historial, les llistes compartides, el teu compte, aquesta guia i la configuració. «Canviar de funció» et porta a la pàgina inicial per triar entre Supermercat i Encàrrecs."]},
+{h:"🛒 Supermercat"},
+{s:["Afegeix un supermercat","Entra a Supermercat i toca el botó gran «Afegir supermercat».",GB('➕ Afegir supermercat')]},
+{s:["Tria la botiga","Escull un dels supermercats que ja porten el seu logo i color, o toca «Un altre supermercat» per escriure'n el nom.",'@brands']},
+{s:["Afegeix productes","Dins de la botiga toca «Afegir producte». Escriu el nom, la quantitat i la unitat. La data és opcional. També hi pots posar una foto, de la galeria o fent-la al moment.",GB('➕ Afegir producte')]},
+{s:["Edita o elimina","A cada producte tens ✏️ per editar-lo i 🗑️ per eliminar-lo. Abans d'eliminar res, l'app et demana confirmació."]},
+{s:["Fes la compra","Toca «Començar compra». Des de la pàgina principal tries quins supermercats inclou; des de dins d'una botiga, només fa la d'aquella botiga. Marca cada producte amb la casella a mesura que el compres i, al final, toca «Finalitzar compra». Si en queden sense comprar, l'app et pregunta si vols conservar-los o eliminar-los.",GB('Començar compra')+GB('Finalitzar compra')]},
+{s:["Consulta l'historial","A «Historial de compres» veus cada compra amb el dia i el lloc. Si la desplegues, veus què has comprat i què ha quedat pendent. Pots eliminar una compra o totes."]},
+{h:"📋 Encàrrecs"},
+{s:["Crea un encàrrec","Toca «+ Encàrrec». Posa-hi el títol, el dia (amb el calendari), l'hora si vols, el lloc i els detalls. La llista surt ordenada per data.",GB('+ Encàrrec')]},
+{s:["Obre'l, edita'l o acaba'l","Toca un encàrrec per veure'n els detalls. Des d'aquí pots editar-lo, compartir-lo o marcar-lo com a fet; passarà a l'historial de tasques, d'on el pots tornar a obrir.",GBS('✏️ Editar')+GBS('Compartir')+'<span class="gb1 g">✅ Marcar com a feta</span>']},
+{s:["Elimina'l","Toca 🗑️ i confirma, o llisca l'encàrrec cap al costat. Si llisques llarg i ràpid, s'esborra directament, sense preguntar."]},
+{h:"🤝 Compartir"},
+{s:["Envia una llista o un encàrrec","Toca «Compartir». L'app et dona un enllaç i un codi de 6 caràcters, i pots enviar l'enllaç per WhatsApp.",GBS('🔗 Compartir')]},
+{s:["Què veu qui el rep","La persona ha d'iniciar sessió. A la pàgina principal veurà un quadre groc amb el botó «Afegir-la». També pot escriure el codi a «Llistes compartides» o «Tasques compartides». Les còpies compartides són independents de les teves llistes personals.",'<span class="gbox">Has rebut una llista compartida</span>']},
+{h:"👤 Compte i configuració"},
+{s:["Compte, idioma i color","Crea un compte amb correu i contrasenya perquè les dades es desin al núvol. Si tries «Continuar sense registrar-se», els canvis no es conserven en tancar l'app. A «Configuració» pots canviar l'idioma i el color de l'app."]}
+],cal:[
+{p:"Google Calendar és una eina externa de Google. MarketList no et fa els avisos ella mateixa: quan toques el botó, envia l'encàrrec al teu Google Calendar, i és Google qui t'avisa."},
+{f:1},
+{h:"Què fa"},
+{p:"Crea un esdeveniment amb el títol, el dia, l'hora, el lloc i la descripció de l'encàrrec. Hi posa un avís 24 hores abans si l'encàrrec té hora, o el dia abans a les 9:00 si no en té. Si té hora, l'esdeveniment dura una hora."},
+{h:"Pas a pas"},
+{s:["Posa-li un dia","Només es pot afegir al calendari un encàrrec que tingui dia. L'hora és opcional."]},
+{s:["Obre l'encàrrec i toca el botó","Toca l'encàrrec a la llista per veure'n els detalls i toca el botó de Google Calendar.",GBS('📅 Afegir a Google Calendar')]},
+{s:["Entra amb Google i accepta","S'obre una finestra de Google. Tria el teu compte i accepta el permís per crear esdeveniments al teu calendari. Aquest pas el fa Google, no MarketList. Si surt un avís d'aplicació no verificada, és normal mentre l'app està en prova: toca l'opció d'avançat i continua."]},
+{s:["Comprova el missatge","Si tot va bé, l'app diu «Afegit a Google Calendar» i t'indica quan t'avisarà."]},
+{s:["Mira el calendari","Obre Google Calendar i hi trobaràs l'esdeveniment. L'avís arribarà com a notificació al mòbil si hi tens l'app de Google Calendar o el compte de Google afegit al calendari del telèfon."]},
+{s:["Actualitza'l si canvia","Si canvies el dia, l'hora o els detalls de l'encàrrec, el botó passa a dir «Actualitzar a Google Calendar». Toca'l i l'esdeveniment es posa al dia.",GBS('📅 Actualitzar a Google Calendar')]},
+{h:"Bon saber"},
+{c:"Si elimines o marques com a feta una tasca a l'app, l'esdeveniment no s'esborra de Google Calendar: l'has d'esborrar tu al calendari."},
+{c:"Fas servir Apple Calendar? Afegeix el teu compte de Google a l'iPhone o al Mac (a Ajustos, Calendari, Comptes). Els esdeveniments i els avisos hi apareixeran sols.",k:'ok'},
+{c:"En aquesta fase de prova, només hi poden entrar les persones que l'administrador de l'app hagi afegit com a usuaris de prova."},
+{h:"Si alguna cosa falla"},
+{c:"«Falta configurar Google Calendar»: l'administrador encara no ha acabat la configuració. «Cal posar un dia a l'encàrrec»: edita'l i tria un dia. «No s'ha pogut connectar amb Google»: torna-ho a provar i comprova que has acceptat el permís i que el navegador no ha bloquejat la finestra."}
+]};
+function guideView(){
+ const brands=()=>{try{return Object.keys(BR).map(k=>{const b=mk(k);return `<span class="gchip" style="background:${b.c};color:${b.t}">${b.n}</span>`;}).join('');}catch(x){return '';}};
+ const flow=[['📝','Encàrrec a MarketList'],['🔐','Permís de Google'],['📅','Esdeveniment al calendari'],['🔔','Avís al mòbil']];
+ let h=`<div class="gtabs">`+[['app','📖',"L'app pas a pas"],['cal','📅','Google Calendar']].map(([k,i,n])=>`<button class="gtab ${gtab==k?'on':''}" data-a="gtab" data-t="${k}">${i} ${n}</button>`).join('')+`</div>`,n=0;
+ GUIDE[gtab].forEach(x=>{
+  if(x.h){h+=`<div class="gh">${x.h}</div>`;n=0;}
+  else if(x.p)h+=`<div class="gp">${x.p}</div>`;
+  else if(x.m)h+=`<div class="gm">${x.m}</div>`;
+  else if(x.f)h+=`<div class="gflow">`+flow.map(([i,t])=>`<div><i>${i}</i>${t}</div>`).join('')+`</div>`;
+  else if(x.c)h+=`<div class="gc ${x.k||''}">${x.c}</div>`;
+  else if(x.s){n++;const m=x.s[2]=='@brands'?brands():(x.s[2]||'');h+=`<div class="gs"><div class="gn">${n}</div><div class="gb"><div class="gt">${x.s[0]}</div><div class="gd">${x.s[1]}</div>${m?`<div class="gm">${m}</div>`:''}</div></div>`;}
+ });
+ return h;}
+IC.guide='📖';TITLES.guide=()=>"Guia d'ús";
+document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a]');if(!t)return;const a=t.dataset.a;
+ if(a=='nav-guide'){gtab='app';go('guide');scrollTo(0,0);}
+ else if(a=='gtab'){gtab=t.dataset.t;render();scrollTo(0,0);}});
+`Guia d'ús=Guía de uso|User guide|Guide d'utilisation|使用指南|Erabilera gida
+L'app pas a pas=La app paso a paso|The app step by step|L'appli pas à pas|应用使用步骤|Aplikazioa pausoz pauso
+Google Calendar=Google Calendar|Google Calendar|Google Agenda|Google 日历|Google Calendar`.split('\n').forEach(l=>{const i=l.indexOf('=');DICT[l.slice(0,i)]=l.slice(i+1).split('|');});
 </script></body></html>
