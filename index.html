@@ -164,6 +164,7 @@ async function share(kind,t){
  else d={kind,title:shName||t.title,task:t};
  try{await db.doc('shared/'+id).set(deep(d));}catch(x){modal={msg:'No s\'ha pogut compartir. Cal tenir permís de col·laborador.',info:1};return render();}
  S.refs.push({id,kind,title:d.title});save();
+ if(ok&&shName){try{const rr=S.refs.find(r=>r.id==id);if(rr&&rr.title!=shName){const x=await db.doc('shared/'+id).get();if(x.exists){const d0=deep(x.data());d0.title=shName;await db.doc('shared/'+id).set(deep(d0));rr.title=shName;save();}}}catch(er){}}
  const rf=S.refs.find(r=>r.id==id);shName=null;modal={share:location.href.split('#')[0]+'#s='+id,code:id,name:rf?rf.title:''};render();}
 const ask=(msg,ok)=>{modal={msg,ok};render();};
 const sName=(list,id)=>(list.find(s=>s.id==id)||{}).name||'';
@@ -315,13 +316,14 @@ async function share(kind,t){
  if(!db||!me){modal={msg:'Per compartir cal haver iniciat sessió.',info:1};return render();}
  const tk=S.tasks.find(x=>x.id==sel);let id=kind=='shop'?S.curCode:kind=='store'?(S.scodes||{})[t]:(tk||{}).code,ok=false;
  if(id){try{ok=(await db.doc('shared/'+id).get()).exists;}catch(x){}}
- if(!ok&&!shName){modal={nameShare:{kind,t,def:kind=='store'?(S.stores.find(x=>x.id==t)||{}).name:kind=='shop'?'Llista de compra':(t||{}).title}};return render();}
+ if(!shName){modal={nameShare:{kind,t,def:(S.refs.find(r=>r.id==id)||{}).title||(kind=='store'?(S.stores.find(x=>x.id==t)||{}).name:kind=='shop'?'Llista de compra':(t||{}).title)}};return render();}
  for(let k=0;k<6&&!ok;k++){id=genCode();let ex=true;try{ex=(await db.doc('shared/'+id).get()).exists;}catch(x){}
   if(ex)continue;
   const st1=kind=='store'?S.stores.find(x=>x.id==t):null,d=kind=='store'?{kind:'shop',title:shName||st1.name,stores:[st1],items:S.items.filter(i=>i.store==t)}:kind=='shop'?{kind,title:shName||'Llista de compra',stores:S.stores.filter(s=>S.items.some(i=>i.store==s.id)),items:S.items}:{kind,title:shName||t.title,task:t};
   try{await db.doc('shared/'+id).set(deep(d));ok=true;}catch(x){break;}
   S.refs.push({id,kind:d.kind,title:d.title});if(kind=='shop')S.curCode=id;else if(kind=='store'){(S.scodes=S.scodes||{})[t]=id;}else if(tk)tk.code=id;save();}
  if(!ok){shName=null;modal={msg:`No s'ha pogut compartir. Cal tenir permís de col·laborador.`,info:1};return render();}
+ if(ok&&shName){try{const rr=S.refs.find(r=>r.id==id);if(rr&&rr.title!=shName){const x=await db.doc('shared/'+id).get();if(x.exists){const d0=deep(x.data());d0.title=shName;await db.doc('shared/'+id).set(deep(d0));rr.title=shName;save();}}}catch(er){}}
  const rf=S.refs.find(r=>r.id==id);shName=null;modal={share:location.href.split('#')[0]+'#s='+id,code:id,name:rf?rf.title:''};render();}
 function sharedList(){const s=fn=='shop';return `<div class="card pad"><div class="ttl">🔑 Tens un codi?</div><label>Escriu el codi que t'han passat per afegir ${s?'una llista de la compra':'una tasca'}</label><div class="row"><input id="code" placeholder="Ex.: K7M2QX" maxlength="8" style="text-transform:uppercase;letter-spacing:3px;font-weight:800"><button class="pri" style="flex:0;white-space:nowrap" data-a="joinCode">Afegir</button></div></div><h3>${s?'Les teves llistes compartides':'Les teves tasques compartides'}</h3>`+
  (S.refs.filter(r=>r.kind==fn).map(r=>`<div class="card row"><div data-a="openSh" data-id="${r.id}" style="flex:1"><b>${e(r.title)}</b></div><button style="flex:0;color:#b3261e" data-a="leave" data-id="${r.id}">✕</button></div>`).join('')||'<div class="dim">Encara no tens res compartit.</div>');}
