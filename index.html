@@ -535,7 +535,7 @@ Nom del nou lloc=Nombre del nuevo lugar|Name of the new place|Nom du nouveau lie
 Lloc=Lugar|Place|Lieu|地点|Lekua`.split('\n').forEach(l=>{const i=l.indexOf('=');DICT[l.slice(0,i)]=l.slice(i+1).split('|');});
 document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a="share-store"]');if(t)share('store',sel);});
 var invT={id:null,t:null};
-const invBanner=()=>{if(inv&&db&&invT.id!=inv){invT={id:inv,t:null};db.doc('shared/'+inv).get().then(x=>{if(x.exists){invT.t=x.data().title;render(true);}},()=>{});}return inv?`<div class="card pad inv"><div class="ttl">🔔 ${invT.id==inv&&invT.t?e(invT.t):'Has rebut una llista compartida'}</div>${invT.id==inv&&invT.t?'<p class="note">T\'han passat aquesta llista</p>':''}<div class="row"><button class="pri" data-a="invadd">Afegir-la</button><button class="sec" data-a="invno">Ara no</button></div></div>`:'';};
+const invBanner=()=>{if(inv&&db&&invT.id!=inv){invT={id:inv,t:null};Promise.resolve(SB.rpc('join_shared',{code:inv})).catch(()=>{}).then(()=>db.doc('shared/'+inv).get()).then(x=>{if(x.exists){invT.t=x.data().title;render(true);}},()=>{});}return inv?`<div class="card pad inv"><div class="ttl">🔔 ${invT.id==inv&&invT.t?e(invT.t):'Has rebut una llista compartida'}</div>${invT.id==inv&&invT.t?'<p class="note">T\'han passat aquesta llista</p>':''}<div class="row"><button class="pri" data-a="invadd">Afegir-la</button><button class="sec" data-a="invno">Ara no</button></div></div>`:'';};
 document.addEventListener('click',async ev=>{const t=ev.target.closest('[data-a]');if(!t)return;const a=t.dataset.a;
  if(a=='invno'){inv=null;render();}
  else if(a=='invadd'){const id=inv,k=await join(id);inv=null;
