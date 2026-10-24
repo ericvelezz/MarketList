@@ -160,11 +160,11 @@ function openSh(id){unsub&&unsub();cur=id;curDoc=null;view='sh';unsub=db.doc('sh
 async function share(kind,t){
  if(!db||!me){modal={msg:'Per compartir cal haver iniciat sessió.',info:1};return render();}
  const id=uid()+uid();let d;
- if(kind=='shop')d={kind,title:'Llista de compra',stores:S.stores.filter(s=>S.items.some(i=>i.store==s.id)),items:S.items};
- else d={kind,title:t.title,task:t};
+ if(kind=='shop')d={kind,title:shName||'Llista de compra',stores:S.stores.filter(s=>S.items.some(i=>i.store==s.id)),items:S.items};
+ else d={kind,title:shName||t.title,task:t};
  try{await db.doc('shared/'+id).set(deep(d));}catch(x){modal={msg:'No s\'ha pogut compartir. Cal tenir permís de col·laborador.',info:1};return render();}
  S.refs.push({id,kind,title:d.title});save();
- modal={share:location.href.split('#')[0]+'#s='+id,code:id};render();}
+ const rf=S.refs.find(r=>r.id==id);shName=null;modal={share:location.href.split('#')[0]+'#s='+id,code:id,name:rf?rf.title:''};render();}
 const ask=(msg,ok)=>{modal={msg,ok};render();};
 const sName=(list,id)=>(list.find(s=>s.id==id)||{}).name||'';
 function storePick(list,sid,lb,ph){pk=sid||null;return `<label>${lb||'Botiga'}</label><div id="chips">${list.map(s=>`<span class="chip ${s.id==sid?'on':''}" data-a="pick" data-id="${s.id}">${e(s.name)}</span>`).join('')}</div><input id="ns" placeholder="${ph?(list.length?ph:'Nom del nou lloc'):(list.length?'+ Nova botiga':'Nom de la nova botiga')}">`;}
@@ -203,7 +203,7 @@ function sharedList(){const k=fn;
 function shView(){
  if(!curDoc)return '<div class="dim">Carregant…</div>';const d=curDoc;
  if(d.kind=='task'){const t=d.task;return `<button class="sec" data-a="shBack">‹ Enrere</button>${taskForm({...t,place:t.storeName||''},1)}<button class="pri" style="width:100%" data-a="saveShTask">Guardar canvis</button>`;}
- return `<button class="sec" data-a="shBack">‹ Enrere</button><div class="card"><div class="row"><input id="n" placeholder="Producte"><input id="q" type="number" value="1" style="flex:.5">${unitSel()}</div>
+ return `<button class="sec" data-a="shBack">‹ Enrere</button><h3 style="margin:12px 4px 4px">${e(d.title||'')}</h3><div class="card pad"><div class="note">🔑 Codi per compartir: <b>${e(cur)}</b></div><button class="sec" style="width:100%;margin-top:8px" data-a="shShare">🔗 Compartir</button></div><div class="card"><div class="row"><input id="n" placeholder="Producte"><input id="q" type="number" value="1" style="flex:.5">${unitSel()}</div>
  <input id="ns" list="dl" placeholder="Botiga"><datalist id="dl">${d.stores.map(s=>`<option value="${e(s.name)}">`).join('')}</datalist><button class="pri" style="width:100%;margin-top:8px" data-a="shAdd">Afegir</button></div>`+
  d.stores.filter(s=>d.items.some(i=>i.store==s.id)).map(s=>`<div class="card"><h4>${e(s.name)}</h4>${d.items.filter(i=>i.store==s.id).map(i=>`<div class="it"><input type="checkbox" data-a="shChk" data-id="${i.id}" ${i.done?'checked':''}><span style="${i.done?'text-decoration:line-through;opacity:.5':''}">${itLine(i)}</span><button data-a="shDel" data-id="${i.id}">✕</button></div>`).join('')}</div>`).join('')||'<div class="dim">Llista buida.</div>';}
 function editStores(){const k=fn=='shop'?'stores':'tstores';
@@ -216,8 +216,8 @@ function body(){
  switch(view){case 'main':return fn=='shop'?shopMain():taskMain();case 'new':return fn=='shop'?newShop():taskForm().replace('<div class="card">','<div class="card"><div class="ttl">📝 Nova tasca</div>')+'<button class="pri" style="width:100%" data-a="saveTask">Guardar</button>';
  case 'cfg':return cfgView();case 'addst':return addStView();case 'prod':return prodView();case 'tedit':return taskEditView();case 'store':return storeView();case 'hist':return fn=='task'?taskHist():histView();case 'shared':return sharedList();case 'edit':return editStores();case 'account':return account();case 'buy':return buyView();case 'detail':return detail();case 'sh':return shView();case 'guide':return guideView();}}
 function modalHtml(){const m=modal;if(!m)return'';let h='';
- if(m.share)h=`<h3>Llista compartida</h3><p>Envia aquest enllaç. La persona haurà d'obrir l'aplicació amb sessió iniciada i amb accés a la pàgina.</p><input readonly value="${e(m.share)}" onclick="this.select()"><div class="codebox">${m.code}</div><p class="note">Digues-li aquest codi: l'haurà d'escriure a l'apartat de compartits.</p><div class="hrow"><button class="pri" data-a="copy">Copiar</button><a href="https://wa.me/?text=${encodeURIComponent(m.share+' (codi: '+m.code+')')}" target="_blank" rel="noopener" style="flex:1"><button class="sec" style="width:100%">WhatsApp</button></a></div><div class="hrow"><button data-a="close" style="width:100%">Tancar</button></div>`;
- else if(m.newst)h=newstModal();
+ if(m.share)h=`<h3>${m.name?e(m.name):'Llista compartida'}</h3><p>Envia aquest enllaç. La persona haurà d'obrir l'aplicació amb sessió iniciada i amb accés a la pàgina.</p><input readonly value="${e(m.share)}" onclick="this.select()"><div class="codebox">${m.code}</div><p class="note">Digues-li aquest codi: l'haurà d'escriure a l'apartat de compartits.</p><div class="hrow"><button class="pri" data-a="copy">Copiar</button><a href="https://wa.me/?text=${encodeURIComponent(m.share+' (codi: '+m.code+')')}" target="_blank" rel="noopener" style="flex:1"><button class="sec" style="width:100%">WhatsApp</button></a></div><div class="hrow"><button data-a="close" style="width:100%">Tancar</button></div>`;
+ else if(m.newst)h=newstModal();else if(m.nameShare)h=`<h3>Nom de la llista</h3><input id="shn" maxlength="40" placeholder="Nom de la llista" value="${e(m.nameShare.def||'')}"><div class="hrow"><button class="pri" data-a="shNameOk">Compartir</button><button data-a="close">Tornar enrere</button></div>`;
  else if(m.photo)h=photoModal();
  else if(m.pickst)h=pickHtml(m);
  else if(m.cal)h=calHtml(m.cal);
@@ -315,15 +315,16 @@ async function share(kind,t){
  if(!db||!me){modal={msg:'Per compartir cal haver iniciat sessió.',info:1};return render();}
  const tk=S.tasks.find(x=>x.id==sel);let id=kind=='shop'?S.curCode:kind=='store'?(S.scodes||{})[t]:(tk||{}).code,ok=false;
  if(id){try{ok=(await db.doc('shared/'+id).get()).exists;}catch(x){}}
+ if(!ok&&!shName){modal={nameShare:{kind,t,def:kind=='store'?(S.stores.find(x=>x.id==t)||{}).name:kind=='shop'?'Llista de compra':(t||{}).title}};return render();}
  for(let k=0;k<6&&!ok;k++){id=genCode();let ex=true;try{ex=(await db.doc('shared/'+id).get()).exists;}catch(x){}
   if(ex)continue;
-  const st1=kind=='store'?S.stores.find(x=>x.id==t):null,d=kind=='store'?{kind:'shop',title:st1.name,stores:[st1],items:S.items.filter(i=>i.store==t)}:kind=='shop'?{kind,title:'Llista de compra',stores:S.stores.filter(s=>S.items.some(i=>i.store==s.id)),items:S.items}:{kind,title:t.title,task:t};
+  const st1=kind=='store'?S.stores.find(x=>x.id==t):null,d=kind=='store'?{kind:'shop',title:shName||st1.name,stores:[st1],items:S.items.filter(i=>i.store==t)}:kind=='shop'?{kind,title:shName||'Llista de compra',stores:S.stores.filter(s=>S.items.some(i=>i.store==s.id)),items:S.items}:{kind,title:shName||t.title,task:t};
   try{await db.doc('shared/'+id).set(deep(d));ok=true;}catch(x){break;}
   S.refs.push({id,kind:d.kind,title:d.title});if(kind=='shop')S.curCode=id;else if(kind=='store'){(S.scodes=S.scodes||{})[t]=id;}else if(tk)tk.code=id;save();}
- if(!ok){modal={msg:`No s'ha pogut compartir. Cal tenir permís de col·laborador.`,info:1};return render();}
- modal={share:location.href.split('#')[0]+'#s='+id,code:id};render();}
+ if(!ok){shName=null;modal={msg:`No s'ha pogut compartir. Cal tenir permís de col·laborador.`,info:1};return render();}
+ const rf=S.refs.find(r=>r.id==id);shName=null;modal={share:location.href.split('#')[0]+'#s='+id,code:id,name:rf?rf.title:''};render();}
 function sharedList(){const s=fn=='shop';return `<div class="card pad"><div class="ttl">🔑 Tens un codi?</div><label>Escriu el codi que t'han passat per afegir ${s?'una llista de la compra':'una tasca'}</label><div class="row"><input id="code" placeholder="Ex.: K7M2QX" maxlength="8" style="text-transform:uppercase;letter-spacing:3px;font-weight:800"><button class="pri" style="flex:0;white-space:nowrap" data-a="joinCode">Afegir</button></div></div><h3>${s?'Les teves llistes compartides':'Les teves tasques compartides'}</h3>`+
- (S.refs.filter(r=>r.kind==fn).map(r=>`<div class="card row"><div data-a="openSh" data-id="${r.id}" style="flex:1"><b>${e(r.title)}</b><br><small>🔑 ${e(r.id)}</small></div><button style="flex:0;color:#b3261e" data-a="leave" data-id="${r.id}">✕</button></div>`).join('')||'<div class="dim">Encara no tens res compartit.</div>');}
+ (S.refs.filter(r=>r.kind==fn).map(r=>`<div class="card row"><div data-a="openSh" data-id="${r.id}" style="flex:1"><b>${e(r.title)}</b></div><button style="flex:0;color:#b3261e" data-a="leave" data-id="${r.id}">✕</button></div>`).join('')||'<div class="dim">Encara no tens res compartit.</div>');}
 function taskMain(){const L=[...S.tasks].sort((a,b)=>(a.date||'9')+(a.time||'')>(b.date||'9')+(b.time||'')?1:-1);
  return L.map(t=>`<div class="card" data-a="openTask" data-id="${t.id}"><div class="row"><div style="flex:1"><b>${e(t.title)}</b>${t.time?' · '+e(t.time):''}<br><small>${fmtD(t.date)}${t.store?' · '+e(sName(S.tstores,t.store)):''}</small></div><button class="pri" style="flex:0;white-space:nowrap" data-a="doneTask" data-id="${t.id}">✅ Fet</button></div></div>`).join('')||'<div class="dim">No tens encàrrecs.<br>Crea\'n un amb «Nova Tasca».</div>';}
 function taskHist(){return (S.thist||[]).map(t=>`<div class="card"><div class="row"><div style="flex:1"><b>${e(t.title)}</b><br><small>✅ ${new Date(t.doneTs).toLocaleString(LOC())}</small><br><small>📅 ${fmtD(t.date)}${t.time?' · '+e(t.time):''}${t.store?' · '+e(sName(S.tstores,t.store)):''}</small>${t.desc?'<br><small>'+e(t.desc)+'</small>':''}</div><button class="sec" style="flex:0" data-a="reopen" data-id="${t.id}">↩️</button><button style="flex:0;color:#b3261e" data-a="delHist" data-id="${t.id}">✕</button></div></div>`).join('')||'<div class="dim">Encara no has completat cap encàrrec.</div>';}
@@ -531,7 +532,8 @@ Nou lloc=Nuevo lugar|New place|Nouveau lieu|新地点|Leku berria
 Nom del nou lloc=Nombre del nuevo lugar|Name of the new place|Nom du nouveau lieu|新地点名称|Leku berriaren izena
 Lloc=Lugar|Place|Lieu|地点|Lekua`.split('\n').forEach(l=>{const i=l.indexOf('=');DICT[l.slice(0,i)]=l.slice(i+1).split('|');});
 document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a="share-store"]');if(t)share('store',sel);});
-const invBanner=()=>inv?`<div class="card pad inv"><div class="ttl">🔔 Has rebut una llista compartida</div><p class="note">Codi: <b>${e(inv)}</b></p><div class="row"><button class="pri" data-a="invadd">Afegir-la</button><button class="sec" data-a="invno">Ara no</button></div></div>`:'';
+var invT={id:null,t:null};
+const invBanner=()=>{if(inv&&db&&invT.id!=inv){invT={id:inv,t:null};db.doc('shared/'+inv).get().then(x=>{if(x.exists){invT.t=x.data().title;render(true);}},()=>{});}return inv?`<div class="card pad inv"><div class="ttl">🔔 ${invT.id==inv&&invT.t?e(invT.t):'Has rebut una llista compartida'}</div>${invT.id==inv&&invT.t?'<p class="note">T\'han passat aquesta llista</p>':''}<div class="row"><button class="pri" data-a="invadd">Afegir-la</button><button class="sec" data-a="invno">Ara no</button></div></div>`:'';};
 document.addEventListener('click',async ev=>{const t=ev.target.closest('[data-a]');if(!t)return;const a=t.dataset.a;
  if(a=='invno'){inv=null;render();}
  else if(a=='invadd'){const id=inv,k=await join(id);inv=null;
@@ -635,8 +637,11 @@ const logoW=(b,z)=>b&&LOGOS[b.k]?`<span class="lg" style="width:${z}px;height:${
 function stCard(s){const b=brandOf(s),n=S.items.filter(i=>i.store==s.id),c=b?b.c:'#8a96a8';
  return `<div class="card scard row" style="--bc:${c}" data-a="openStore" data-id="${s.id}">${logo(b,48)}<div style="flex:1"><h4 style="margin:0">${e(s.name)}</h4><small>${e(n.slice(0,3).map(i=>i.name).join(', '))}</small></div><span class="badge" style="background:${c};color:${b?b.t:'#fff'}">${n.length}</span><span style="flex:0">›</span><button style="flex:0;color:#b3261e;padding:6px 8px" data-a="delStore" data-id="${s.id}">🗑️</button></div>`;}
 function shopMain(){return `<button class="bigadd" data-a="addst">➕ Afegir supermercat</button><button class="pri" style="width:100%;font-size:17px" data-a="startbuy" ${S.items.length?'':'disabled'}>Començar compra</button><h3 style="margin:18px 4px 6px">Els teus supermercats</h3>`+(S.stores.map(stCard).join('')||'<div class="dim">Encara no has afegit cap supermercat.</div>')+shMainHtml();}
-function shMainHtml(){const R=(S.refs||[]).filter(r=>r.kind=='shop'||r.kind=='store');return R.length?`<h3 style="margin:18px 4px 6px">Llistes compartides</h3>`+R.map(r=>`<div class="card row" data-a="openShM" data-id="${r.id}"><div style="flex:1;min-width:0"><h4 style="margin:0;overflow:hidden;text-overflow:ellipsis">🔗 ${e(r.title)}</h4><small>🔑 ${e(r.id)}</small></div><span style="flex:0">›</span></div>`).join(''):'';}
-var shMain=false;
+function shMainHtml(){const R=(S.refs||[]).filter(r=>r.kind=='shop'||r.kind=='store');return R.length?`<h3 style="margin:18px 4px 6px">Llistes compartides</h3>`+R.map(r=>`<div class="card row" data-a="openShM" data-id="${r.id}"><div style="flex:1;min-width:0"><h4 style="margin:0;overflow:hidden;text-overflow:ellipsis">🔗 ${e(r.title)}</h4></div><span style="flex:0">›</span></div>`).join(''):'';}
+var shMain=false,shName=null;
+document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a="shNameOk"],[data-a="shShare"]');if(!t)return;
+ if(t.dataset.a=='shNameOk'){const n=($('#shn').value||'').trim();if(!n)return;const m=modal.nameShare;shName=n;modal=null;share(m.kind,m.t);}
+ else{const rf=S.refs.find(r=>r.id==cur);modal={share:location.href.split('#')[0]+'#s='+cur,code:cur,name:rf?rf.title:(curDoc&&curDoc.title)||''};render();}});
 document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a="openShM"]');if(t){shMain=true;openSh(t.dataset.id);}});
 function addStView(){return `<button class="sec" data-a="menu">‹ Enrere</button><h3 style="margin:12px 4px 10px">Tria un o més supermercats</h3>${addedNames.length?'<div class="note" style="margin:0 4px 10px">✓ '+addedNames.map(e).join(', ')+'</div>':''}<div class="pgrid">`+Object.keys(BR).map(k=>{const b=mk(k),ex=S.stores.find(s=>(brandOf(s)||{}).k==k),on=pickSel.includes(k);return `<button class="ptile${on?' on':''}" style="background:${b.c};color:${b.t}" data-a="togBrand" data-id="${k}">${logoW(b,60)}<b>${b.n}</b>${on?'<small>✓ Seleccionat</small>':ex?'<small>✓ Ja afegit</small>':''}</button>`;}).join('')+`<button class="ptile alt" data-a="newstOpen"><span style="font-size:34px">➕</span><b>Un altre supermercat</b></button></div><button class="pri" style="width:100%;margin-top:14px" data-a="addBrands" ${pickSel.length?'':'disabled'}>Afegir els seleccionats</button>`;}
 function newstModal(){return `<h3>Un altre supermercat</h3><input id="nstn" placeholder="Nom del supermercat"><label>Foto (opcional)</label><div id="nstp" style="margin:4px 0"></div><input type="file" accept="image/*" onchange="nstFile(this)"><label>Color (opcional)</label><input id="nstc" type="color" value="#ffffff" oninput="this.dataset.s=1" style="width:100%;height:44px;padding:2px"><div class="note">Si no tries cap color, el supermercat quedarà en blanc.</div><div class="hrow"><button class="pri" data-a="newstSave">Guardar</button><button data-a="close">Tornar enrere</button></div>`;}
@@ -692,6 +697,7 @@ function guideView(){
   else if(x.s){n++;const m=x.s[2]=='@brands'?brands():(x.s[2]||'');h+=`<div class="gs"><div class="gn">${n}</div><div class="gb"><div class="gt">${x.s[0]}</div><div class="gd">${x.s[1]}</div>${m?`<div class="gm">${m}</div>`:''}</div></div>`;}
  });
  return h;}
+{const _t=TITLES.sh;TITLES.sh=()=>(curDoc&&curDoc.title)||_t();}
 IC.guide='📖';TITLES.guide=()=>"Guia d'ús";
 document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a]');if(!t)return;const a=t.dataset.a;
  if(a=='nav-guide'){gtab='app';go('guide');scrollTo(0,0);}
@@ -718,7 +724,10 @@ document.addEventListener('click',ev=>{const t=ev.target.closest('[data-a="logou
 Si no tries cap color, el supermercat quedarà en blanc.=Si no eliges ningún color, el supermercado quedará en blanco.|If you pick no colour, the supermarket stays white.|Si vous ne choisissez aucune couleur, le supermarché reste blanc.|如果不选择颜色，超市将保持白色。|Kolorerik aukeratzen ez baduzu, supermerkatua zuri geratuko da.
 Si tanques la sessió, deixaràs de veure les teves llistes, productes i historial en aquest dispositiu. Les dades queden guardades al núvol i les recuperaràs en tornar a iniciar sessió amb el teu compte.=Si cierras la sesión, dejarás de ver tus listas, productos e historial en este dispositivo. Los datos quedan guardados en la nube y los recuperarás al volver a iniciar sesión con tu cuenta.|If you sign out, you will no longer see your lists, products and history on this device. Your data stays saved in the cloud and you will get it back when you sign in again.|Si vous vous déconnectez, vous ne verrez plus vos listes, produits et historique sur cet appareil. Vos données restent enregistrées dans le cloud et vous les retrouverez en vous reconnectant.|退出登录后，你将无法在此设备上看到清单、商品和历史记录。数据仍保存在云端，重新登录后即可恢复。|Saioa itxiz gero, ez dituzu gailu honetan zure zerrendak, produktuak eta historiala ikusiko. Datuak hodeian gordeta geratzen dira eta berriro saioa hasterakoan berreskuratuko dituzu.`.split('\n').forEach(l=>{const i=l.indexOf('=');DICT[l.slice(0,i)]=l.slice(i+1).split('|');});
 {const _r2=render;render=function(k){if(view!='addst'){pickSel=[];addedNames=[];}_r2(k);applyStoreTheme();backNew();};}
-`Benvingut=Bienvenido|Welcome|Bienvenue|欢迎|Ongi etorri
+`Nom de la llista=Nombre de la lista|Name of the list|Nom de la liste|清单名称|Zerrendaren izena
+Codi per compartir=Código para compartir|Code to share|Code à partager|分享代码|Partekatzeko kodea
+T'han passat aquesta llista=Te han pasado esta lista|This list was shared with you|On vous a transmis cette liste|有人与你分享了这份清单|Zerrenda hau partekatu dizute
+Benvingut=Bienvenido|Welcome|Bienvenue|欢迎|Ongi etorri
 Bentornat=Bienvenido de nuevo|Welcome back|Content de vous revoir|欢迎回来|Ongi etorri berriro
 Tria un o més supermercats=Elige uno o más supermercados|Choose one or more supermarkets|Choisissez un ou plusieurs supermarchés|选择一个或多个超市|Aukeratu supermerkatu bat edo gehiago
 Afegir els seleccionats=Añadir los seleccionados|Add the selected ones|Ajouter les sélectionnés|添加所选项|Gehitu hautatutakoak
